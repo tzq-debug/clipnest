@@ -1,0 +1,10 @@
+node_modules/
+dist/
+release/
+*.log
+.preview-*.png
+.shot-*.png
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

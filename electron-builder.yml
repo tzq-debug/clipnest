@@ -1,0 +1,43 @@
+appId: com.clipnest.app
+productName: ClipNest
+copyright: Copyright © 2026 ClipNest contributors
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**/*
+  - electron/**/*
+  - assets/**/*
+  - package.json
+
+asar: true
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+  artifactName: ClipNest-${version}-${arch}.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: ClipNest
+
+mac:
+  target:
+    - dmg
+  icon: build/icon.png
+  category: public.app-category.productivity
+
+linux:
+  target:
+    - AppImage
+  icon: build/icon.png
+  category: Utility
