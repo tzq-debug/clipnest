@@ -77,6 +77,17 @@ app.whenReady().then(async () => {
     await wait(400)
   }
 
+  if (scenario === 'actions') {
+    await win.webContents.executeJavaScript(`
+      document.querySelectorAll('.card-actions').forEach((a) => { a.style.opacity = '1' })
+      const starred = [...document.querySelectorAll('.card')].find((c) => c.querySelector('.flag-star'))
+      const pinned = [...document.querySelectorAll('.card')].find((c) => c.querySelector('.flag-pin'))
+      starred?.scrollIntoView({ block: 'center' })
+      JSON.stringify({ starred: Boolean(starred), pinned: Boolean(pinned) })
+    `).then((r) => console.log('cards with flags:', r))
+    await wait(400)
+  }
+
   if (scenario === 'clear') {
     await win.webContents.executeJavaScript(`document.querySelector('.icon-btn[aria-label="清理历史"]').click()`)
     await wait(400)

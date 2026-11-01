@@ -11,7 +11,7 @@ const FILTERS: { key: Filter; label: string; icon?: React.ReactNode }[] = [
   { key: 'text', label: '文本', icon: <TextIcon size={12} /> },
   { key: 'image', label: '图片', icon: <ImageIcon size={12} /> },
   { key: 'files', label: '文件', icon: <FileIcon size={12} /> },
-  { key: 'pinned', label: '收藏' }
+  { key: 'starred', label: '收藏' }
 ]
 
 export default function Panel({ state }: { state: AppState }) {
@@ -32,7 +32,7 @@ export default function Panel({ state }: { state: AppState }) {
   const filtered = useMemo(() => {
     const list = items.filter((it) => {
       const picture = it.type === 'image' || it.isImage
-      if (filter === 'pinned' && !it.pinned) return false
+      if (filter === 'starred' && !it.starred) return false
       if (filter === 'image' && !picture) return false
       if (filter === 'files' && (it.type !== 'files' || it.isImage)) return false
       if (filter === 'text' && it.type !== 'text') return false
@@ -120,7 +120,8 @@ export default function Panel({ state }: { state: AppState }) {
   // expired: a slower second click just re-armed the button and nothing
   // happened. The confirm now stays on screen until you pick one of the two
   // buttons, so the state can never vanish between clicks.
-  const clearable = items.filter((it) => !it.pinned).length
+  const clearable = items.filter((it) => !it.pinned && !it.starred).length
+  const marked = items.filter((it) => it.pinned || it.starred).length
 
   const askClear = useCallback(() => {
     if (!clearable) {
@@ -137,8 +138,8 @@ export default function Panel({ state }: { state: AppState }) {
     const res = await window.clipnest.clear(true)
     setSelected([])
     setSelectMode(false)
-    setToast(res.cleared ? `已清空 ${res.cleared} 条，收藏已保留` : '没有可清理的记录')
-  }, [])
+    setToast(res.cleared ? `已清空 ${res.cleared} 条${marked ? `，${marked} 条收藏/置顶已保留` : ''}` : '没有可清理的记录')
+  }, [marked])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -195,7 +196,7 @@ export default function Panel({ state }: { state: AppState }) {
   const counts = useMemo(
     () => ({
       all: items.length,
-      pinned: items.filter((i) => i.pinned).length
+      starred: items.filter((i) => i.starred).length
     }),
     [items]
   )
@@ -298,7 +299,7 @@ export default function Panel({ state }: { state: AppState }) {
                 {f.icon}
                 {f.label}
                 {f.key === 'all' && counts.all > 0 && <i>{counts.all}</i>}
-                {f.key === 'pinned' && counts.pinned > 0 && <i>{counts.pinned}</i>}
+                {f.key === 'starred' && counts.starred > 0 && <i>{counts.starred}</i>}
               </button>
             ))}
             <span className="filters-spacer" />
@@ -316,7 +317,7 @@ export default function Panel({ state }: { state: AppState }) {
             {filtered.length === 0 && (
               <div className="empty">
                 <StackIcon size={26} />
-                <p>{query ? '没有匹配的内容' : filter === 'pinned' ? '还没有固定任何记录' : '还什么都没复制过'}</p>
+                <p>{query ? '没有匹配的内容' : filter === 'starred' ? '还没有收藏任何记录' : '还什么都没复制过'}</p>
                 <span>{query ? '换个关键词试试' : '复制任意文字、图片或文件，这里就会出现'}</span>
               </div>
             )}
@@ -339,6 +340,7 @@ export default function Panel({ state }: { state: AppState }) {
                   }}
                   onToggleSelect={() => toggleSelect(item.id)}
                   onPin={() => window.clipnest.pin(item.id, !item.pinned)}
+                  onStar={() => window.clipnest.star(item.id, !item.starred)}
                   onRemove={() => window.clipnest.remove(item.id)}
                 />
               </div>
@@ -352,7 +354,7 @@ export default function Panel({ state }: { state: AppState }) {
               <div className="selbar-count">
                 <TrashIcon size={14} />
                 清空 <strong>{clearable}</strong> 条记录
-                <span className="confirm-note">收藏会保留</span>
+                <span className="confirm-note">收藏和置顶会保留</span>
               </div>
               <div className="selbar-actions">
                 <button className="ghost-btn" onClick={() => setConfirmClear(false)}>

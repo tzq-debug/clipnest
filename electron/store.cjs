@@ -39,6 +39,24 @@ function atomicWrite(file, data) {
   fs.renameSync(tmp, file)
 }
 
+/**
+ * 2 adds a second flag: `pinned` now only means "keep at the top", `starred`
+ * means "keep it in 收藏". Before that, one flag meant both, so anything that
+ * was pinned used to show up under 收藏 and survive a clear — carry that over
+ * rather than silently dropping someone's favourites.
+ */
+const HISTORY_VERSION = 2
+
+function migrateItems(saved) {
+  const items = Array.isArray(saved.items) ? saved.items : []
+  if ((Number(saved.version) || 1) >= HISTORY_VERSION) return items
+  return items.map((it) => ({ ...it, starred: Boolean(it.pinned) }))
+}
+
+function isMarked(item) {
+  return Boolean(item.pinned || item.starred)
+}
+
 class Store {
   constructor(dir) {
     this.dir = dir
@@ -66,7 +84,8 @@ class Store {
 
   loadPlaintext() {
     const saved = safeRead(this.historyFile, { items: [] })
-    this.items = Array.isArray(saved.items) ? saved.items : []
+    this.items = migrateItems(saved)
+    if ((Number(saved.version) || 1) < HISTORY_VERSION) this.scheduleSave()
   }
 
   /** Open the vault with an already verified key and load the history. */
@@ -74,7 +93,7 @@ class Store {
     this.key = key
     if (fs.existsSync(this.encryptedFile)) {
       const data = JSON.parse(decrypt(key, fs.readFileSync(this.encryptedFile)).toString('utf8'))
-      this.items = Array.isArray(data.items) ? data.items : []
+      this.items = migrateItems(data)
     } else {
       this.items = []
     }
@@ -205,6 +224,14 @@ class Store {
     return it
   }
 
+  toggleStar(id, value) {
+    const it = this.get(id)
+    if (!it) return null
+    it.starred = typeof value === 'boolean' ? value : !it.starred
+    this.scheduleSave()
+    return it
+  }
+
   remove(id) {
     const i = this.items.findIndex((it) => it.id === id)
     if (i === -1) return false
@@ -214,9 +241,9 @@ class Store {
     return true
   }
 
-  clear(keepPinned = true) {
-    const keep = keepPinned ? this.items.filter((it) => it.pinned) : []
-    const drop = keepPinned ? this.items.filter((it) => !it.pinned) : this.items
+  clear(keepMarked = true) {
+    const keep = keepMarked ? this.items.filter(isMarked) : []
+    const drop = keepMarked ? this.items.filter((it) => !isMarked(it)) : this.items
     drop.forEach((it) => this.dropAssets(it))
     this.items = keep
     this.scheduleSave()
@@ -227,7 +254,7 @@ class Store {
     while (this.items.length > max) {
       let idx = -1
       for (let i = this.items.length - 1; i >= 0; i--) {
-        if (!this.items[i].pinned) {
+        if (!isMarked(this.items[i])) {
           idx = i
           break
         }
@@ -265,7 +292,7 @@ class Store {
     if (!this.dirty) return
     if (this.locked) return // never overwrite the vault with an empty list
     this.dirty = false
-    const json = JSON.stringify({ version: 1, items: this.items })
+    const json = JSON.stringify({ version: HISTORY_VERSION, items: this.items })
     try {
       if (this.vault.enabled) {
         if (!this.key) return

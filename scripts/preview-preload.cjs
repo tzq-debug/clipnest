@@ -28,6 +28,7 @@ function text(id, body, minutes, extra = {}) {
     bytes: 0,
     createdAt: now - minutes * 60_000,
     pinned: false,
+    starred: false,
     ...extra
   }
 }
@@ -120,7 +121,7 @@ let state = {
     text('6', '会议纪要：周四下午三点，讨论 v0.2 的加密存储方案', 95, { pinned: true }),
     text('10', '', 6, { sensitive: 'api-key', sensitiveLabel: 'API 密钥', chars: 51 }),
     text('7', 'npm run dist:win', 180),
-    text('8', '订单号 20261031-8842 · 收货人 张先生 · 13800000000', 300)
+    text('8', '订单号 20261031-8842 · 收货人 张先生 · 13800000000', 300, { starred: true })
   ]
 }
 
@@ -148,6 +149,12 @@ const api = {
     console.log('[mock-copy]', mode, JSON.stringify(ids))
     return { ok: true, message: '预览模式不会真的写剪贴板' }
   },
+  star: async (id, value) => {
+    const it = state.items.find((i) => i.id === id)
+    if (it) it.starred = value
+    push()
+    return true
+  },
   pin: async (id, value) => {
     const it = state.items.find((i) => i.id === id)
     if (it) it.pinned = value
@@ -161,8 +168,8 @@ const api = {
   },
   reveal: async () => true,
   clear: async () => {
-    const cleared = state.items.filter((i) => !i.pinned).length
-    state.items = state.items.filter((i) => i.pinned)
+    const cleared = state.items.filter((i) => !i.pinned && !i.starred).length
+    state.items = state.items.filter((i) => i.pinned || i.starred)
     push()
     return { cleared }
   },

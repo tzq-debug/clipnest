@@ -20,6 +20,7 @@
   --danger-soft: #fcebeb;
   --warn: #8a5a00;
   --warn-soft: #faeeda;
+  --star: #c08a1e;
   --scroll: rgba(18, 18, 30, 0.18);
   --shadow: 0 20px 50px rgba(20, 20, 42, 0.18), 0 2px 8px rgba(20, 20, 42, 0.07);
 }
@@ -45,6 +46,7 @@
   --danger-soft: #3a2020;
   --warn: #efc27b;
   --warn-soft: #3a2e18;
+  --star: #e0a93c;
   --scroll: rgba(255, 255, 255, 0.16);
   --shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
 }
@@ -614,9 +616,24 @@ button {
   opacity: 0.55;
 }
 
-.pin-flag {
-  color: var(--accent-strong);
+.flag {
   font-weight: 500;
+}
+
+.flag-pin {
+  color: var(--accent-strong);
+}
+
+.flag-star {
+  color: var(--star);
+}
+
+.star-btn.on {
+  color: var(--star);
+}
+
+.star-btn.on svg {
+  fill: currentColor;
 }
 
 .card-actions {

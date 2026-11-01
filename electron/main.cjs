@@ -158,7 +158,8 @@ function publicItem(item) {
     height: item.height || 0,
     bytes: item.bytes || 0,
     createdAt: item.createdAt,
-    pinned: Boolean(item.pinned)
+    pinned: Boolean(item.pinned),
+    starred: Boolean(item.starred)
   }
 }
 
@@ -487,6 +488,13 @@ function registerIpc() {
     return true
   })
 
+  ipcMain.handle('item:star', (_e, id, value) => {
+    if (vaultLocked) return false
+    store.toggleStar(id, value)
+    pushState()
+    return true
+  })
+
   ipcMain.handle('item:remove', (_e, id) => {
     if (vaultLocked) return false
     store.remove(id)
@@ -502,10 +510,11 @@ function registerIpc() {
     return true
   })
 
-  ipcMain.handle('items:clear', (_e, keepPinned) => {
+  ipcMain.handle('items:clear', (_e, keepMarked) => {
     if (vaultLocked) return { cleared: 0 }
-    const keep = keepPinned !== false
-    const cleared = store.all().filter((it) => !keep || !it.pinned).length
+    const keep = keepMarked !== false
+    const marked = (it) => it.pinned || it.starred
+    const cleared = store.all().filter((it) => !keep || !marked(it)).length
     store.clear(keep)
     pushState()
     if (tray) tray.setContextMenu(buildTrayMenu())

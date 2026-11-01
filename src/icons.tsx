@@ -38,6 +38,13 @@ export const PinIcon = (p: IconProps) => (
   </svg>
 )
 
+/** 收藏. Filled in by `.star-btn.on svg { fill: currentColor }`. */
+export const StarIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="m12 4.4 2.35 4.86 5.15.72-3.75 3.6.9 5.32L12 16.4l-4.65 2.5.9-5.32-3.75-3.6 5.15-.72L12 4.4Z" />
+  </svg>
+)
+
 export const CopyIcon = (p: IconProps) => (
   <svg {...base(p)}>
     <rect x="9" y="9" width="11" height="11" rx="2.5" />

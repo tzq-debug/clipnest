@@ -31,9 +31,9 @@ The merged text is joined in the order you see on screen, with a separator you c
 - **Everything you copy** — plain text, HTML rich text, images, and files from your file manager.
 - **Screenshots become pictures** — screenshot tools usually put a `.png` *file* on the clipboard; ClipNest recognises it, generates a thumbnail and files it under images.
 - **Click to enlarge** — thumbnails open a preview; copy from there or hand it to your system image viewer.
-- **Search and filters** — live search, filter by text / image / file / pinned.
-- **Pin favourites** — keep important entries on top, out of reach of auto-cleanup.
-- **One-click clean** — the trash button asks for confirmation in a bar at the bottom, then clears everything except pinned entries.
+- **Search and filters** — live search, filter by text / image / file / starred.
+- **Star and pin are separate** — 收藏 (star) keeps an entry in the 收藏 filter and survives cleanup; 置顶 (pin) only floats it to the top of the list.
+- **One-click clean** — the trash button asks for confirmation in a bar at the bottom, then clears everything except starred and pinned entries.
 - **Optional encryption** — a password encrypts the history and every stored image with AES-256-GCM; the app asks for it on each start.
 - **Secrets are treated differently** — API keys, private keys, JWTs, ID and card numbers are recognised as you copy them, sealed with the OS key and masked in the list. No master password needed.
 - **Private by design** — no account, no network, no telemetry.

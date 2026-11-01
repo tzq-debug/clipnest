@@ -17,13 +17,16 @@ export interface ClipItem {
   height: number
   bytes: number
   createdAt: number
+  /** Kept at the top of the list. */
   pinned: boolean
+  /** Kept in 收藏, and kept when the history is cleared. */
+  starred: boolean
   /** Set when the text was sealed with the OS key and masked in the list. */
   sensitive: SensitiveKind | null
   sensitiveLabel: string | null
 }
 
-export type Filter = 'all' | 'text' | 'image' | 'files' | 'pinned'
+export type Filter = 'all' | 'text' | 'image' | 'files' | 'starred'
 
 export type MergeSeparator = 'newline' | 'blank' | 'space' | 'none'
 
@@ -82,6 +85,7 @@ export interface ClipNestApi {
   openImage: (id: string) => Promise<boolean>
   setModal: (open: boolean) => Promise<boolean>
   pin: (id: string, value: boolean) => Promise<boolean>
+  star: (id: string, value: boolean) => Promise<boolean>
   remove: (id: string) => Promise<boolean>
   reveal: (id: string) => Promise<boolean>
   clear: (keepPinned: boolean) => Promise<{ cleared: number }>

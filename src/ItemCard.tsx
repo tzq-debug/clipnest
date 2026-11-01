@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import type { ClipItem, ImageAsset } from './types'
-import { CopyIcon, FileIcon, ImageIcon, LockIcon, PinIcon, TextIcon, TrashIcon } from './icons'
+import { CopyIcon, FileIcon, ImageIcon, LockIcon, PinIcon, StarIcon, TextIcon, TrashIcon } from './icons'
 import { fileName, itemSizeLabel, relativeTime, typeLabel } from './utils'
 
 interface Props {
@@ -12,6 +12,7 @@ interface Props {
   onActivate: () => void
   onToggleSelect: () => void
   onPin: () => void
+  onStar: () => void
   onRemove: () => void
   onPreview: () => void
 }
@@ -25,6 +26,7 @@ function ItemCardBase({
   onActivate,
   onToggleSelect,
   onPin,
+  onStar,
   onRemove,
   onPreview
 }: Props) {
@@ -111,12 +113,24 @@ function ItemCardBase({
           <span>{itemSizeLabel(item)}</span>
           <span className="dot" />
           <span>{relativeTime(item.createdAt)}</span>
-          {item.pinned && <span className="pin-flag">已固定</span>}
+          {item.pinned && <span className="flag flag-pin">已置顶</span>}
+          {item.starred && <span className="flag flag-star">已收藏</span>}
         </div>
       </div>
 
       <div className="card-actions">
-        <button className={item.pinned ? 'on' : ''} title={item.pinned ? '取消固定' : '固定到顶部'} onClick={onPin}>
+        <button
+          className={`star-btn${item.starred ? ' on' : ''}`}
+          title={item.starred ? '取消收藏' : '收藏（清空时保留）'}
+          onClick={onStar}
+        >
+          <StarIcon size={14} />
+        </button>
+        <button
+          className={`pin-btn${item.pinned ? ' on' : ''}`}
+          title={item.pinned ? '取消置顶' : '置顶（排在列表最前）'}
+          onClick={onPin}
+        >
           <PinIcon size={14} />
         </button>
         <button title={picture ? '复制这张图' : '复制这一条'} onClick={onActivate}>
