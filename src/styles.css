@@ -459,6 +459,20 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
+  cursor: zoom-in;
+}
+
+.card-image:hover img {
+  border-color: var(--accent-400);
+}
+
+.card-filename {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .card-image img {
@@ -736,6 +750,98 @@ button {
   from {
     opacity: 0;
     transform: translate(-50%, 6px);
+  }
+}
+
+/* ---------------------------------------------------------------- preview */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: rgba(18, 18, 32, 0.52);
+  animation: fadeIn 0.12s ease;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 100%;
+  background: var(--bg);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.36);
+}
+
+.preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 7px 7px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.preview-title {
+  font-size: 11.5px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-stage {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  background: var(--bg2);
+  overflow: hidden;
+}
+
+.preview-stage img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.preview-loading {
+  font-size: 12px;
+  color: var(--faint);
+}
+
+.preview-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 11px;
+  border-top: 1px solid var(--line);
+}
+
+.preview-meta {
+  font-size: 11px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 6px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
 }
 

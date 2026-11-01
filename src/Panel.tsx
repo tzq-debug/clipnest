@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { AppState, Filter, ImageAsset } from './types'
 import { ItemCard } from './ItemCard'
+import PreviewOverlay from './PreviewOverlay'
 import Settings from './Settings'
 import { CloseIcon, CopyIcon, ImageIcon, LayersIcon, PauseIcon, SearchIcon, SettingsIcon, StackIcon, TextIcon, FileIcon } from './icons'
 import { matchesQuery } from './utils'
@@ -22,13 +23,17 @@ export default function Panel({ state }: { state: AppState }) {
   const [screen, setScreen] = useState<'list' | 'settings'>('list')
   const [toast, setToast] = useState('')
   const [images, setImages] = useState<Record<string, ImageAsset>>({})
+  const [previewId, setPreviewId] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
   const filtered = useMemo(() => {
     const list = items.filter((it) => {
+      const picture = it.type === 'image' || it.isImage
       if (filter === 'pinned' && !it.pinned) return false
-      if (filter !== 'all' && filter !== 'pinned' && it.type !== filter) return false
+      if (filter === 'image' && !picture) return false
+      if (filter === 'files' && (it.type !== 'files' || it.isImage)) return false
+      if (filter === 'text' && it.type !== 'text') return false
       return matchesQuery(it, query)
     })
     return list.sort((a, b) => {
@@ -53,7 +58,7 @@ export default function Panel({ state }: { state: AppState }) {
 
   useEffect(() => {
     const need = filtered
-      .filter((it) => it.type === 'image' && !images[it.id])
+      .filter((it) => (it.type === 'image' || it.isImage) && !images[it.id])
       .slice(0, 30)
       .map((it) => it.id)
     if (!need.length) return
@@ -65,6 +70,12 @@ export default function Panel({ state }: { state: AppState }) {
       alive = false
     }
   }, [filtered, images])
+
+  // Let the main process know a preview is open, so Escape closes the preview
+  // instead of collapsing the whole panel.
+  useEffect(() => {
+    window.clipnest.setModal(Boolean(previewId))
+  }, [previewId])
 
   const orderedSelection = useMemo(
     () => filtered.filter((it) => selected.includes(it.id)).map((it) => it.id),
@@ -91,7 +102,7 @@ export default function Panel({ state }: { state: AppState }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (screen !== 'list') return
+      if (screen !== 'list' || previewId) return
       const el = e.target as HTMLElement
       const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')
       if (e.key === 'ArrowDown') {
@@ -122,7 +133,7 @@ export default function Panel({ state }: { state: AppState }) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [filtered, active, orderedSelection.length, runCopy, toggleSelect, screen])
+  }, [filtered, active, orderedSelection.length, runCopy, toggleSelect, screen, previewId])
 
   useEffect(() => {
     const node = listRef.current?.querySelector<HTMLElement>(`[data-idx="${active}"]`)
@@ -141,6 +152,8 @@ export default function Panel({ state }: { state: AppState }) {
     }),
     [items]
   )
+
+  const previewItem = previewId ? items.find((i) => i.id === previewId) || null : null
 
   return (
     <div className="panel">
@@ -238,6 +251,10 @@ export default function Panel({ state }: { state: AppState }) {
                     setActive(idx)
                     runCopy('merged', [item.id])
                   }}
+                  onPreview={() => {
+                    setActive(idx)
+                    setPreviewId(item.id)
+                  }}
                   onToggleSelect={() => toggleSelect(item.id)}
                   onPin={() => window.clipnest.pin(item.id, !item.pinned)}
                   onRemove={() => window.clipnest.remove(item.id)}
@@ -283,6 +300,19 @@ export default function Panel({ state }: { state: AppState }) {
             </footer>
           )}
         </>
+      )}
+
+      {previewItem && (
+        <PreviewOverlay
+          item={previewItem}
+          asset={images[previewItem.id]}
+          onClose={() => setPreviewId(null)}
+          onCopy={() => {
+            setPreviewId(null)
+            runCopy('merged', [previewItem.id])
+          }}
+          onOpen={() => window.clipnest.openImage(previewItem.id)}
+        />
       )}
     </div>
   )

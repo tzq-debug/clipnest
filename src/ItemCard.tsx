@@ -12,11 +12,12 @@ interface Props {
   onToggleSelect: () => void
   onPin: () => void
   onRemove: () => void
+  onPreview: () => void
 }
 
-function ItemCardBase({ item, active, selected, asset, onActivate, onToggleSelect, onPin, onRemove }: Props) {
-  const icon =
-    item.type === 'image' ? <ImageIcon size={13} /> : item.type === 'files' ? <FileIcon size={13} /> : <TextIcon size={13} />
+function ItemCardBase({ item, active, selected, asset, onActivate, onToggleSelect, onPin, onRemove, onPreview }: Props) {
+  const picture = item.type === 'image' || item.isImage
+  const icon = picture ? <ImageIcon size={13} /> : item.type === 'files' ? <FileIcon size={13} /> : <TextIcon size={13} />
 
   return (
     <div
@@ -43,8 +44,13 @@ function ItemCardBase({ item, active, selected, asset, onActivate, onToggleSelec
       <div className="card-body">
         {item.type === 'text' && <p className="card-text">{item.preview}</p>}
 
-        {item.type === 'image' && (
-          <div className="card-image">
+        {picture && (
+          <div
+            className="card-image"
+            title="点击查看大图"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={onPreview}
+          >
             {asset?.thumb ? <img src={asset.thumb} alt="" draggable={false} /> : <div className="img-skeleton" />}
             <span className="img-dims">
               {item.width}×{item.height}
@@ -52,7 +58,7 @@ function ItemCardBase({ item, active, selected, asset, onActivate, onToggleSelec
           </div>
         )}
 
-        {item.type === 'files' && (
+        {item.type === 'files' && !item.isImage && (
           <ul className="card-files">
             {(item.files || []).slice(0, 3).map((f) => (
               <li key={f}>
@@ -64,8 +70,15 @@ function ItemCardBase({ item, active, selected, asset, onActivate, onToggleSelec
           </ul>
         )}
 
+        {item.type === 'files' && item.isImage && (
+          <p className="card-filename">{fileName((item.files || [''])[0])}</p>
+        )}
+
         <div className="card-meta">
-          <span className="badge">{icon}{typeLabel(item.type)}</span>
+          <span className="badge">
+            {icon}
+            {picture ? '图片' : typeLabel(item.type)}
+          </span>
           <span className="dot" />
           <span>{itemSizeLabel(item)}</span>
           <span className="dot" />
@@ -78,7 +91,7 @@ function ItemCardBase({ item, active, selected, asset, onActivate, onToggleSelec
         <button className={item.pinned ? 'on' : ''} title={item.pinned ? '取消固定' : '固定到顶部'} onClick={onPin}>
           <PinIcon size={14} />
         </button>
-        <button title="复制这一条" onClick={onActivate}>
+        <button title={picture ? '复制这张图' : '复制这一条'} onClick={onActivate}>
           <CopyIcon size={14} />
         </button>
         <button className="danger" title="删除" onClick={onRemove}>

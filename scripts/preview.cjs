@@ -45,8 +45,19 @@ app.whenReady().then(async () => {
     if (typeof msg === 'string' && msg.includes('[mock-copy]')) console.log('RENDERER>', msg)
   })
 
-  if (scenario === 'click') {
+  if (scenario === 'preview') {
     await win.webContents.executeJavaScript(`
+      const im = document.querySelectorAll('.card-image')[0]
+      if (im) {
+        im.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+        im.click()
+      }
+      'opened preview'
+    `)
+    await wait(600)
+  }
+
+  if (scenario === 'click') {    await win.webContents.executeJavaScript(`
       const cards = document.querySelectorAll('.card')
       cards[4].dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
       'clicked card 4'

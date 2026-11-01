@@ -139,6 +139,7 @@ class Store {
     const files = []
     if (item.image) files.push(path.join(this.imagesDir, item.image))
     if (item.thumb) files.push(path.join(this.imagesDir, item.thumb))
+    if (item.big) files.push(path.join(this.imagesDir, item.big))
     files.forEach((f) => {
       try {
         fs.unlinkSync(f)
@@ -205,6 +206,31 @@ class Store {
       width: size.width,
       height: size.height,
       bytes: buffer.length
+    }
+  }
+
+  /** Build a thumbnail + a larger preview for an image file that lives outside our
+   *  own storage (e.g. a screenshot copied from Explorer as a file drop). */
+  saveThumbFromFile(filePath) {
+    const { nativeImage } = require('electron')
+    try {
+      const buf = fs.readFileSync(filePath)
+      const image = nativeImage.createFromBuffer(buf)
+      if (image.isEmpty()) return null
+      const size = image.getSize()
+      if (size.width < 2 || size.height < 2) return null
+
+      const id = Store.newId()
+      const thumb = `${id}.thumb.png`
+      const big = `${id}.big.png`
+      const fit = (max) => (size.width > max ? image.resize({ width: max, quality: 'good' }) : image)
+
+      fs.writeFileSync(path.join(this.imagesDir, thumb), fit(360).toPNG())
+      fs.writeFileSync(path.join(this.imagesDir, big), fit(1400).toPNG())
+
+      return { thumb, big, width: size.width, height: size.height }
+    } catch {
+      return null
     }
   }
 

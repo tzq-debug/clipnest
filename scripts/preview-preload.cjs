@@ -14,6 +14,8 @@ function text(id, body, minutes, extra = {}) {
   return {
     id,
     type: 'text',
+    isImage: false,
+    big: null,
     preview: body,
     chars: body.length,
     files: null,
@@ -59,8 +61,10 @@ let state = {
       preview: '',
       chars: 0,
       files: null,
+      isImage: false,
       image: 'a.png',
       thumb: 'a.thumb.png',
+      big: 'a.big.png',
       width: 1280,
       height: 720,
       bytes: 348_000,
@@ -72,13 +76,31 @@ let state = {
       type: 'files',
       preview: '',
       chars: 0,
+      isImage: false,
       files: ['D:\\work\\clipnest\\README.md', 'D:\\work\\clipnest\\LICENSE', 'D:\\work\\clipnest\\package.json'],
       image: null,
       thumb: null,
+      big: null,
       width: 0,
       height: 0,
       bytes: 24_500,
       createdAt: now - 21 * 60_000,
+      pinned: false
+    },
+    {
+      id: '9',
+      type: 'files',
+      preview: '',
+      chars: 0,
+      isImage: true,
+      files: ['D:\\Pictures\\Screenshots\\屏幕截图 2026-11-01 110233.png'],
+      image: null,
+      thumb: 'b.thumb.png',
+      big: 'b.big.png',
+      width: 1920,
+      height: 1080,
+      bytes: 1_240_000,
+      createdAt: now - 12 * 60_000,
       pinned: false
     },
     text(
@@ -145,6 +167,8 @@ const api = {
     push()
     return { settings: state.settings, hotkeyOk: true }
   },
+  setModal: async () => true,
+  openImage: async () => true,
   openDataDir: async () => '',
   appInfo: async () => ({ version: '0.1.0', dataDir: state.dataDir, platform: 'win32', electron: '45' }),
   quit: async () => {}

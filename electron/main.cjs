@@ -36,6 +36,7 @@ let animTimer = null
 let pendingTimer = null
 let collapseTimer = null
 let pushTimer = null
+let modalOpen = false
 
 if (process.platform === 'win32') app.setAppUserModelId('com.clipnest.app')
 
@@ -143,11 +144,13 @@ function publicItem(item) {
   return {
     id: item.id,
     type: item.type,
+    isImage: Boolean(item.isImage),
     preview: item.type === 'text' ? item.text.slice(0, 2400) : '',
     chars: item.chars || 0,
     files: item.files || null,
     image: item.image || null,
     thumb: item.thumb || null,
+    big: item.big || null,
     width: item.width || 0,
     height: item.height || 0,
     bytes: item.bytes || 0,
@@ -298,6 +301,7 @@ function createWindow() {
 
   win.webContents.on('before-input-event', (event, input) => {
     if (input.type === 'keyDown' && input.key === 'Escape') {
+      if (modalOpen) return // the renderer owns Escape while a preview is open
       event.preventDefault()
       collapsePanel({ dismiss: view === 'palette' })
     }
@@ -402,6 +406,11 @@ function registerIpc() {
     return true
   })
 
+  ipcMain.handle('ui:modal', (_e, open) => {
+    modalOpen = Boolean(open)
+    return true
+  })
+
   ipcMain.handle('item:pin', (_e, id, value) => {
     store.togglePin(id, value)
     pushState()
@@ -434,13 +443,33 @@ function registerIpc() {
     const out = {}
     for (const id of ids || []) {
       const it = store.get(id)
-      if (!it || it.type !== 'image') continue
+      if (!it) continue
+      const fullFile = it.type === 'image' ? it.image : it.big
+      if (!it.thumb && !fullFile) continue
       out[id] = {
         thumb: store.readImageAsset(it.thumb || it.image),
-        full: store.readImageAsset(it.image)
+        full: store.readImageAsset(fullFile)
       }
     }
     return out
+  })
+
+  ipcMain.handle('image:open', async (_e, id) => {
+    const it = store.get(id)
+    if (!it) return false
+    const target =
+      it.type === 'files' && it.files && it.files.length
+        ? it.files[0]
+        : it.type === 'image' && it.image
+          ? path.join(store.imagesDir, it.image)
+          : null
+    if (!target) return false
+    try {
+      const err = await shell.openPath(target)
+      return !err
+    } catch {
+      return false
+    }
   })
 
   ipcMain.handle('copy', async (_e, payload) => {
@@ -508,6 +537,34 @@ function registerIpc() {
 
 /* ------------------------------------------------------------------ boot */
 
+/**
+ * Records captured before image-file detection existed (or while "capture images"
+ * was off) are still plain file items. Give them a thumbnail so screenshots taken
+ * earlier show up under the picture filter too.
+ */
+function backfillImageFiles() {
+  const IMAGE_RE = /\.(png|jpe?g|gif|webp|bmp|tiff?|avif)$/i
+  let changed = false
+  for (const item of store.all()) {
+    if (item.type !== 'files' || item.thumb || !item.files || !item.files.length) continue
+    if (!item.files.every((f) => IMAGE_RE.test(f))) continue
+    const asset = store.saveThumbFromFile(item.files[0])
+    if (!asset) continue
+    Object.assign(item, {
+      isImage: true,
+      thumb: asset.thumb,
+      big: asset.big,
+      width: asset.width,
+      height: asset.height
+    })
+    changed = true
+  }
+  if (changed) {
+    store.scheduleSave()
+    pushState()
+  }
+}
+
 app.whenReady().then(() => {
   store = new Store(app.getPath('userData'))
 
@@ -528,6 +585,8 @@ app.whenReady().then(() => {
     }
   })
   watcher.start()
+
+  setTimeout(backfillImageFiles, 900)
 
   screen.on('display-metrics-changed', () => {
     if (!win || win.isDestroyed()) return

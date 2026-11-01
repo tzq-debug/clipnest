@@ -68,7 +68,9 @@ export function typeLabel(type: ClipItem['type']): string {
 
 export function itemSizeLabel(item: ClipItem): string {
   if (item.type === 'text') return `${item.chars} 字`
-  if (item.type === 'image') return `${item.width}×${item.height}`
+  if (item.isImage || item.type === 'image') {
+    return item.bytes ? humanBytes(item.bytes) : `${item.width}×${item.height}`
+  }
   const n = item.files?.length || 0
   return n > 1 ? `${n} 个文件` : humanBytes(item.bytes)
 }

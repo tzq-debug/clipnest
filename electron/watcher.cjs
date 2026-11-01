@@ -15,6 +15,7 @@ const { Store } = require('./store.cjs')
  */
 
 const KNOWN_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/bmp', 'image/tiff', 'image/webp']
+const IMAGE_FILE_RE = /\.(png|jpe?g|gif|webp|bmp|tiff?|avif)$/i
 
 function parseUriList(raw) {
   return raw
@@ -80,6 +81,24 @@ function createWatcher({ store, onChange, interval = 420 }) {
             /* the file may already be gone */
           }
         }
+
+        // Screenshot tools often put a .png *file* on the clipboard instead of raw
+        // image data, so image files get a thumbnail and are grouped with pictures.
+        let extra = {}
+        const imageFiles = files.filter((f) => IMAGE_FILE_RE.test(f))
+        if (settings.captureImages && imageFiles.length) {
+          const asset = store.saveThumbFromFile(imageFiles[0])
+          if (asset) {
+            extra = {
+              isImage: imageFiles.length === files.length,
+              thumb: asset.thumb,
+              big: asset.big,
+              width: asset.width,
+              height: asset.height
+            }
+          }
+        }
+
         return {
           id: Store.newId(),
           type: 'files',
@@ -87,37 +106,39 @@ function createWatcher({ store, onChange, interval = 420 }) {
           bytes,
           hash,
           createdAt: Date.now(),
-          pinned: false
+          pinned: false,
+          ...extra
         }
       }
     }
 
-    // 2. Text, with rich variants when the source app provides them
+    // 2. Text, with rich variants when the source app provides them.
+    //    An empty text/plain must not swallow an image sitting on the same clipboard.
     if (types.includes('text/plain')) {
       const text = await readTextType(item, 'text/plain')
-      if (!text || !text.trim().length) return null
-
-      const hash = Store.hashOf('t:', text)
-      if (text.length > settings.maxTextLength || ignored(text)) {
+      if (text && text.trim().length) {
+        const hash = Store.hashOf('t:', text)
+        if (text.length > settings.maxTextLength || ignored(text)) {
+          baseline = hash
+          return null
+        }
+        if (hash === baseline) return null
         baseline = hash
-        return null
-      }
-      if (hash === baseline) return null
-      baseline = hash
 
-      const html = types.includes('text/html') ? await readTextType(item, 'text/html') : ''
-      const rtf = types.includes('text/rtf') ? await readTextType(item, 'text/rtf') : ''
+        const html = types.includes('text/html') ? await readTextType(item, 'text/html') : ''
+        const rtf = types.includes('text/rtf') ? await readTextType(item, 'text/rtf') : ''
 
-      return {
-        id: Store.newId(),
-        type: 'text',
-        text,
-        html: html && html.length < 200000 ? html : null,
-        rtf: rtf && rtf.length < 200000 ? rtf : null,
-        chars: text.length,
-        hash,
-        createdAt: Date.now(),
-        pinned: false
+        return {
+          id: Store.newId(),
+          type: 'text',
+          text,
+          html: html && html.length < 200000 ? html : null,
+          rtf: rtf && rtf.length < 200000 ? rtf : null,
+          chars: text.length,
+          hash,
+          createdAt: Date.now(),
+          pinned: false
+        }
       }
     }
 

@@ -41,6 +41,8 @@ contextBridge.exposeInMainWorld('clipnest', {
   dismiss: () => ipcRenderer.invoke('view:dismiss'),
 
   copy: (ids, mode) => ipcRenderer.invoke('copy', { ids, mode }),
+  openImage: (id) => ipcRenderer.invoke('image:open', id),
+  setModal: (open) => ipcRenderer.invoke('ui:modal', open),
   pin: (id, value) => ipcRenderer.invoke('item:pin', id, value),
   remove: (id) => ipcRenderer.invoke('item:remove', id),
   reveal: (id) => ipcRenderer.invoke('item:reveal', id),

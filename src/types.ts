@@ -3,11 +3,14 @@ export type ItemType = 'text' | 'image' | 'files'
 export interface ClipItem {
   id: string
   type: ItemType
+  /** A file item whose files are all pictures (screenshots copied as files). */
+  isImage: boolean
   preview: string
   chars: number
   files: string[] | null
   image: string | null
   thumb: string | null
+  big: string | null
   width: number
   height: number
   bytes: number
@@ -67,6 +70,8 @@ export interface ClipNestApi {
   hover: (inside: boolean) => Promise<boolean>
   dismiss: () => Promise<boolean>
   copy: (ids: string[], mode: 'merged' | 'sequential') => Promise<CopyResult>
+  openImage: (id: string) => Promise<boolean>
+  setModal: (open: boolean) => Promise<boolean>
   pin: (id: string, value: boolean) => Promise<boolean>
   remove: (id: string) => Promise<boolean>
   reveal: (id: string) => Promise<boolean>
