@@ -18,6 +18,7 @@ function text(id, body, minutes, extra = {}) {
     big: null,
     sensitive: null,
     sensitiveLabel: null,
+    sealed: false,
     preview: body,
     chars: body.length,
     files: null,
@@ -148,6 +149,25 @@ const api = {
   copy: async (ids, mode) => {
     console.log('[mock-copy]', mode, JSON.stringify(ids))
     return { ok: true, message: '预览模式不会真的写剪贴板' }
+  },
+  seal: async (id, value) => {
+    const it = state.items.find((i) => i.id === id)
+    if (!it) return { ok: false, message: '找不到这条记录' }
+    if (it.type !== 'text') return { ok: false, message: '只能加密文本条目' }
+    if (value) {
+      it.backup = it.preview
+      it.sealed = true
+      it.sensitive = 'manual'
+      it.sensitiveLabel = '手动加密'
+      it.preview = ''
+    } else {
+      it.sealed = false
+      it.sensitive = null
+      it.sensitiveLabel = null
+      it.preview = it.backup || ''
+    }
+    push()
+    return { ok: true, sealed: value }
   },
   star: async (id, value) => {
     const it = state.items.find((i) => i.id === id)

@@ -36,6 +36,7 @@ The merged text is joined in the order you see on screen, with a separator you c
 - **One-click clean** — the trash button asks for confirmation in a bar at the bottom, then clears everything except starred entries. Pinned entries go too: pinning is only about order.
 - **Optional encryption** — a password encrypts the history and every stored image with AES-256-GCM; the app asks for it on each start.
 - **Secrets are treated differently** — API keys, private keys, JWTs, ID and card numbers are recognised as you copy them, sealed with the OS key and masked in the list. No master password needed.
+- **Lock any entry yourself** — the padlock on a text card seals just that item, whether or not it looks like a credential.
 - **Private by design** — no account, no network, no telemetry.
 
 ## Install
@@ -144,6 +145,12 @@ By default they are **sealed and masked**: the text is encrypted with the OS key
 If you would rather not keep them at all, set **Settings → Privacy → Handling** to `skip`.
 
 The detection is pattern-based, not a guarantee. A key pasted inside a long paragraph of prose may slip through; the vault and the ignore list are the belts to this pair of braces.
+
+### Locking a single entry yourself
+
+Detection only catches what looks like a credential. Anything else you want kept out of plain sight — a note, an address, a customer number — can be locked by hand: hover a text card and click the padlock.
+
+That entry is sealed with the same OS key, the card shows `手动加密 · 123 字符` instead of the text, and copying still returns the full content. Click the padlock again to turn it back into plain text. Images and file entries are not lockable this way — turn on the vault for those.
 
 ## Known limitations
 

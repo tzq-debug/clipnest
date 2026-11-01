@@ -345,6 +345,10 @@ export default function Panel({ state }: { state: AppState }) {
                   onToggleSelect={() => toggleSelect(item.id)}
                   onPin={() => window.clipnest.pin(item.id, !item.pinned)}
                   onStar={() => window.clipnest.star(item.id, !item.starred)}
+                  onSeal={async () => {
+                    const res = await window.clipnest.seal(item.id, !item.sealed)
+                    if (!res.ok) setToast(res.message || '加密失败')
+                  }}
                   onRemove={() => window.clipnest.remove(item.id)}
                 />
               </div>

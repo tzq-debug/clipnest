@@ -13,6 +13,7 @@ interface Props {
   onToggleSelect: () => void
   onPin: () => void
   onStar: () => void
+  onSeal: () => void
   onRemove: () => void
   onPreview: () => void
 }
@@ -27,6 +28,7 @@ function ItemCardBase({
   onToggleSelect,
   onPin,
   onStar,
+  onSeal,
   onRemove,
   onPreview
 }: Props) {
@@ -119,6 +121,15 @@ function ItemCardBase({
       </div>
 
       <div className="card-actions">
+        {item.type === 'text' && (
+          <button
+            className={`seal-btn${item.sealed ? ' on' : ''}`}
+            title={item.sealed ? '取消加密（内容会变回明文）' : '加密这一条（列表打码，复制时自动解密）'}
+            onClick={onSeal}
+          >
+            <LockIcon size={14} />
+          </button>
+        )}
         <button
           className={`star-btn${item.starred ? ' on' : ''}`}
           title={item.starred ? '取消收藏' : '收藏（清空时保留）'}

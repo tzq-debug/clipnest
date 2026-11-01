@@ -24,6 +24,8 @@ export interface ClipItem {
   /** Set when the text was sealed with the OS key and masked in the list. */
   sensitive: SensitiveKind | null
   sensitiveLabel: string | null
+  /** True while the text only exists as ciphertext. */
+  sealed: boolean
 }
 
 export type Filter = 'all' | 'text' | 'image' | 'files' | 'starred'
@@ -86,6 +88,7 @@ export interface ClipNestApi {
   setModal: (open: boolean) => Promise<boolean>
   pin: (id: string, value: boolean) => Promise<boolean>
   star: (id: string, value: boolean) => Promise<boolean>
+  seal: (id: string, value: boolean) => Promise<{ ok: boolean; sealed?: boolean; message?: string }>
   remove: (id: string) => Promise<boolean>
   reveal: (id: string) => Promise<boolean>
   clear: (keepPinned: boolean) => Promise<{ cleared: number }>

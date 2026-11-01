@@ -149,6 +149,7 @@ function publicItem(item) {
     preview: item.type === 'text' && !item.sealed ? item.text.slice(0, 2400) : '',
     sensitive: item.sensitive || null,
     sensitiveLabel: item.sensitiveLabel || null,
+    sealed: Boolean(item.sealed),
     chars: item.chars || 0,
     files: item.files || null,
     image: item.image || null,
@@ -493,6 +494,13 @@ function registerIpc() {
     store.toggleStar(id, value)
     pushState()
     return true
+  })
+
+  ipcMain.handle('item:seal', (_e, id, value) => {
+    if (vaultLocked) return { ok: false, message: '请先解锁' }
+    const res = store.toggleSeal(id, value)
+    if (res.ok) pushState()
+    return res
   })
 
   ipcMain.handle('item:remove', (_e, id) => {

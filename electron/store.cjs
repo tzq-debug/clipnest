@@ -339,6 +339,38 @@ class Store {
     }
   }
 
+  /**
+   * Seal or unseal one entry on the user's request, as opposed to the automatic
+   * pattern matching in sensitive.cjs. Same mechanism (OS key, no password), so
+   * the item still copies normally — it is only unreadable at rest and masked
+   * in the list.
+   */
+  toggleSeal(id, value) {
+    const it = this.get(id)
+    if (!it) return { ok: false, message: '找不到这条记录' }
+    if (it.type !== 'text') return { ok: false, message: '只能加密文本条目' }
+
+    const wantSealed = typeof value === 'boolean' ? value : !it.sealed
+    if (wantSealed === Boolean(it.sealed)) return { ok: true, sealed: wantSealed }
+
+    if (wantSealed) {
+      const sealed = this.seal(it.text || '')
+      if (!sealed) return { ok: false, message: '系统不支持加密（缺少密钥环）' }
+      it.sealed = sealed
+      it.chars = (it.text || '').length
+      it.text = ''
+      it.sensitive = it.sensitive || 'manual'
+      it.sensitiveLabel = it.sensitiveLabel || '手动加密'
+    } else {
+      it.text = this.revealText(it)
+      it.sealed = null
+      it.sensitive = null
+      it.sensitiveLabel = null
+    }
+    this.scheduleSave()
+    return { ok: true, sealed: wantSealed }
+  }
+
   /* ---------- capture helpers ---------- */
 
   static newId() {

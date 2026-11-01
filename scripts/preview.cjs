@@ -77,6 +77,23 @@ app.whenReady().then(async () => {
     await wait(400)
   }
 
+  if (scenario === 'seal') {
+    const info = await win.webContents.executeJavaScript(`
+      (() => {
+        const cards = [...document.querySelectorAll('.card')].filter((c) => c.querySelector('.card-text'))
+        const target = cards[1]
+        target.querySelector('.seal-btn').click()
+        return new Promise((r) => setTimeout(() => {
+          document.querySelectorAll('.card-actions').forEach((a) => { a.style.opacity = '1' })
+          target.scrollIntoView({ block: 'center' })
+          r({ text: target.querySelector('.card-text')?.textContent || '(正文已隐藏)', secret: target.querySelector('.card-secret')?.innerText.replace(/\\s+/g, ' ') || '' })
+        }, 400))
+      })()
+    `)
+    console.log('sealed card:', JSON.stringify(info))
+    await wait(400)
+  }
+
   if (scenario === 'actions') {
     await win.webContents.executeJavaScript(`
       document.querySelectorAll('.card-actions').forEach((a) => { a.style.opacity = '1' })
