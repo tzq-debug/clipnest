@@ -3,7 +3,7 @@ import type { AppState, Filter, ImageAsset } from './types'
 import { ItemCard } from './ItemCard'
 import PreviewOverlay from './PreviewOverlay'
 import Settings from './Settings'
-import { CloseIcon, CopyIcon, ImageIcon, LayersIcon, PauseIcon, SearchIcon, SettingsIcon, StackIcon, TextIcon, FileIcon } from './icons'
+import { CloseIcon, CopyIcon, ImageIcon, LayersIcon, PauseIcon, SearchIcon, SettingsIcon, StackIcon, TextIcon, FileIcon, TrashIcon, CheckIcon } from './icons'
 import { matchesQuery } from './utils'
 
 const FILTERS: { key: Filter; label: string; icon?: React.ReactNode }[] = [
@@ -24,6 +24,8 @@ export default function Panel({ state }: { state: AppState }) {
   const [toast, setToast] = useState('')
   const [images, setImages] = useState<Record<string, ImageAsset>>({})
   const [previewId, setPreviewId] = useState<string | null>(null)
+  const [selectMode, setSelectMode] = useState(false)
+  const [clearing, setClearing] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
@@ -71,11 +73,11 @@ export default function Panel({ state }: { state: AppState }) {
     }
   }, [filtered, images])
 
-  // Let the main process know a preview is open, so Escape closes the preview
-  // instead of collapsing the whole panel.
+  // Escape belongs to the renderer while a preview or a multi-select is open,
+  // otherwise the main process would collapse the whole panel.
   useEffect(() => {
-    window.clipnest.setModal(Boolean(previewId))
-  }, [previewId])
+    window.clipnest.setModal(Boolean(previewId) || selectMode)
+  }, [previewId, selectMode])
 
   const orderedSelection = useMemo(
     () => filtered.filter((it) => selected.includes(it.id)).map((it) => it.id),
@@ -83,7 +85,20 @@ export default function Panel({ state }: { state: AppState }) {
   )
 
   const toggleSelect = useCallback((id: string) => {
+    setSelectMode(true)
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }, [])
+
+  const exitSelect = useCallback(() => {
+    setSelectMode(false)
+    setSelected([])
+  }, [])
+
+  const toggleSelectMode = useCallback(() => {
+    setSelectMode((on) => {
+      if (on) setSelected([])
+      return !on
+    })
   }, [])
 
   const runCopy = useCallback(async (mode: 'merged' | 'sequential', explicitIds?: string[]) => {
@@ -98,7 +113,21 @@ export default function Panel({ state }: { state: AppState }) {
     const res = await window.clipnest.copy(ids, mode)
     if (!res.ok) setToast(res.message)
     setSelected([])
+    setSelectMode(false)
   }, [orderedSelection, filtered, active])
+
+  const handleClear = useCallback(async () => {
+    if (!clearing) {
+      setClearing(true)
+      setTimeout(() => setClearing(false), 3000)
+      return
+    }
+    setClearing(false)
+    const res = await window.clipnest.clear(true)
+    setSelected([])
+    setSelectMode(false)
+    setToast(res.cleared ? `已清空 ${res.cleared} 条，收藏已保留` : '没有可清理的记录')
+  }, [clearing])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -128,12 +157,16 @@ export default function Panel({ state }: { state: AppState }) {
         if (it) window.clipnest.remove(it.id)
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && !typing) {
         e.preventDefault()
+        setSelectMode(true)
         setSelected(filtered.map((it) => it.id))
+      } else if (e.key === 'Escape' && selectMode) {
+        e.preventDefault()
+        exitSelect()
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [filtered, active, orderedSelection.length, runCopy, toggleSelect, screen, previewId])
+  }, [filtered, active, orderedSelection.length, runCopy, toggleSelect, screen, previewId, selectMode, exitSelect])
 
   useEffect(() => {
     const node = listRef.current?.querySelector<HTMLElement>(`[data-idx="${active}"]`)
@@ -155,6 +188,12 @@ export default function Panel({ state }: { state: AppState }) {
 
   const previewItem = previewId ? items.find((i) => i.id === previewId) || null : null
 
+  const allSelected = filtered.length > 0 && filtered.every((it) => selected.includes(it.id))
+
+  const toggleAll = useCallback(() => {
+    setSelected(allSelected ? [] : filtered.map((it) => it.id))
+  }, [allSelected, filtered])
+
   return (
     <div className="panel">
       <header className="head" onMouseDown={(e) => e.stopPropagation()}>
@@ -170,6 +209,16 @@ export default function Panel({ state }: { state: AppState }) {
           )}
         </div>
         <div className="head-actions">
+          {items.length > 0 && (
+            <button
+              className={`icon-btn${clearing ? ' armed' : ''}`}
+              title={clearing ? '再点一次，确认清空（收藏会保留）' : '清理历史（保留收藏）'}
+              aria-label="清理历史"
+              onClick={handleClear}
+            >
+              <TrashIcon size={15} />
+            </button>
+          )}
           <button className="icon-btn" title="设置" aria-label="设置" onClick={() => setScreen(screen === 'settings' ? 'list' : 'settings')}>
             <SettingsIcon size={15} />
           </button>
@@ -229,9 +278,18 @@ export default function Panel({ state }: { state: AppState }) {
                 {f.key === 'pinned' && counts.pinned > 0 && <i>{counts.pinned}</i>}
               </button>
             ))}
+            <span className="filters-spacer" />
+            <button
+              className={`filter multi${selectMode ? ' on' : ''}`}
+              title="多选：勾几条一次粘出去"
+              onClick={toggleSelectMode}
+            >
+              <CheckIcon size={12} />
+              多选
+            </button>
           </div>
 
-          <div className="list" ref={listRef}>
+          <div className={`list${selectMode ? ' is-selecting' : ''}`} ref={listRef}>
             {filtered.length === 0 && (
               <div className="empty">
                 <StackIcon size={26} />
@@ -246,6 +304,7 @@ export default function Panel({ state }: { state: AppState }) {
                   item={item}
                   active={idx === active}
                   selected={selected.includes(item.id)}
+                  selectMode={selectMode}
                   asset={images[item.id]}
                   onActivate={() => {
                     setActive(idx)
@@ -265,20 +324,31 @@ export default function Panel({ state }: { state: AppState }) {
 
           {toast && <div className="toast">{toast}</div>}
 
-          {orderedSelection.length > 0 ? (
+          {selectMode ? (
             <div className="selbar">
               <div className="selbar-count">
                 <LayersIcon size={14} />
-                已选 <strong>{orderedSelection.length}</strong> 项
+                {orderedSelection.length ? (
+                  <>
+                    已选 <strong>{orderedSelection.length}</strong> 项
+                  </>
+                ) : (
+                  '点条目开始勾选'
+                )}
               </div>
               <div className="selbar-actions">
-                <button className="ghost-btn" onClick={() => setSelected([])}>
-                  取消
+                <button className="ghost-btn" onClick={toggleAll}>
+                  {allSelected ? '取消全选' : '全选'}
                 </button>
-                <button className="ghost-btn" title="逐条自动 Ctrl+V（部分程序可能拦截）" onClick={() => runCopy('sequential')}>
+                <button
+                  className="ghost-btn"
+                  title="逐条自动 Ctrl+V（部分程序可能拦截）"
+                  disabled={!orderedSelection.length}
+                  onClick={() => runCopy('sequential')}
+                >
                   依次粘贴
                 </button>
-                <button className="primary-btn" onClick={() => runCopy('merged')}>
+                <button className="primary-btn" disabled={!orderedSelection.length} onClick={() => runCopy('merged')}>
                   <CopyIcon size={13} /> 合并复制
                 </button>
               </div>

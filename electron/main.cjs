@@ -433,10 +433,12 @@ function registerIpc() {
   })
 
   ipcMain.handle('items:clear', (_e, keepPinned) => {
-    store.clear(keepPinned !== false)
+    const keep = keepPinned !== false
+    const cleared = store.all().filter((it) => !keep || !it.pinned).length
+    store.clear(keep)
     pushState()
     if (tray) tray.setContextMenu(buildTrayMenu())
-    return true
+    return { cleared }
   })
 
   ipcMain.handle('images:get', (_e, ids) => {

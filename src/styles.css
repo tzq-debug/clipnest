@@ -250,6 +250,11 @@ button {
   color: var(--text);
 }
 
+.icon-btn.armed {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
 /* ---------------------------------------------------------------- search */
 
 .search {
@@ -306,8 +311,22 @@ button {
 
 .filters {
   display: flex;
+  align-items: center;
   gap: 3px;
   padding: 9px 11px 6px;
+}
+
+.filters-spacer {
+  flex: 1;
+}
+
+.filter.multi {
+  color: var(--muted);
+}
+
+.filter.multi.on {
+  background: var(--accent-solid);
+  color: #fff;
 }
 
 .filter {
@@ -463,6 +482,22 @@ button {
 }
 
 .card-image:hover img {
+  border-color: var(--accent-400);
+}
+
+.card-image.no-zoom {
+  cursor: inherit;
+}
+
+.card-image.no-zoom:hover img {
+  border-color: var(--line);
+}
+
+.list.is-selecting .card {
+  cursor: pointer;
+}
+
+.list.is-selecting .check-dot {
   border-color: var(--accent-400);
 }
 
@@ -706,6 +741,17 @@ button {
 .ghost-btn:hover {
   color: var(--text);
   border-color: var(--line2);
+}
+
+.ghost-btn:disabled,
+.primary-btn:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.ghost-btn:disabled:hover {
+  color: var(--muted);
+  border-color: var(--line);
 }
 
 .primary-btn {

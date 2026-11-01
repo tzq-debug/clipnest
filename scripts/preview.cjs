@@ -45,6 +45,32 @@ app.whenReady().then(async () => {
     if (typeof msg === 'string' && msg.includes('[mock-copy]')) console.log('RENDERER>', msg)
   })
 
+  if (scenario === 'clear') {
+    await win.webContents.executeJavaScript(`document.querySelector('.icon-btn[aria-label="清理历史"]').click()`)
+    await wait(250)
+    const armed = await win.webContents.executeJavaScript(
+      `document.querySelector('.icon-btn.armed') ? 'armed' : 'not armed'`
+    )
+    await win.webContents.executeJavaScript(`document.querySelector('.icon-btn[aria-label="清理历史"]').click()`)
+    await wait(500)
+    console.log('first click:', armed)
+  }
+
+  if (scenario === 'select') {
+    await win.webContents.executeJavaScript(`
+      document.querySelector('.filter.multi').click()
+    `)
+    await wait(250)
+    await win.webContents.executeJavaScript(`
+      ;[1, 3, 4].forEach((i) => {
+        const c = document.querySelectorAll('.card')[i]
+        c && c.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+      })
+      'selected'
+    `)
+    await wait(400)
+  }
+
   if (scenario === 'button') {
     const res = await win.webContents.executeJavaScript(`
       const card = document.querySelectorAll('.card')[5]

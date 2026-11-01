@@ -151,9 +151,10 @@ const api = {
   },
   reveal: async () => true,
   clear: async () => {
+    const cleared = state.items.filter((i) => !i.pinned).length
     state.items = state.items.filter((i) => i.pinned)
     push()
-    return true
+    return { cleared }
   },
   getImages: async (ids) => {
     const out = {}

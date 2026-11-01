@@ -7,6 +7,7 @@ interface Props {
   item: ClipItem
   active: boolean
   selected: boolean
+  selectMode: boolean
   asset?: ImageAsset
   onActivate: () => void
   onToggleSelect: () => void
@@ -15,7 +16,18 @@ interface Props {
   onPreview: () => void
 }
 
-function ItemCardBase({ item, active, selected, asset, onActivate, onToggleSelect, onPin, onRemove, onPreview }: Props) {
+function ItemCardBase({
+  item,
+  active,
+  selected,
+  selectMode,
+  asset,
+  onActivate,
+  onToggleSelect,
+  onPin,
+  onRemove,
+  onPreview
+}: Props) {
   const picture = item.type === 'image' || item.isImage
   const icon = picture ? <ImageIcon size={13} /> : item.type === 'files' ? <FileIcon size={13} /> : <TextIcon size={13} />
 
@@ -24,6 +36,10 @@ function ItemCardBase({ item, active, selected, asset, onActivate, onToggleSelec
       className={`card${active ? ' is-active' : ''}${selected ? ' is-selected' : ''}`}
       onMouseDown={(e) => {
         if ((e.target as HTMLElement).closest('button')) return
+        if (selectMode) {
+          onToggleSelect()
+          return
+        }
         if (e.shiftKey || e.metaKey || e.ctrlKey) {
           onToggleSelect()
         } else {
@@ -46,10 +62,14 @@ function ItemCardBase({ item, active, selected, asset, onActivate, onToggleSelec
 
         {picture && (
           <div
-            className="card-image"
-            title="点击查看大图"
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={onPreview}
+            className={`card-image${selectMode ? ' no-zoom' : ''}`}
+            title={selectMode ? undefined : '点击查看大图'}
+            onMouseDown={(e) => {
+              if (!selectMode) e.stopPropagation()
+            }}
+            onClick={() => {
+              if (!selectMode) onPreview()
+            }}
           >
             {asset?.thumb ? <img src={asset.thumb} alt="" draggable={false} /> : <div className="img-skeleton" />}
             <span className="img-dims">

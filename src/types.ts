@@ -75,7 +75,7 @@ export interface ClipNestApi {
   pin: (id: string, value: boolean) => Promise<boolean>
   remove: (id: string) => Promise<boolean>
   reveal: (id: string) => Promise<boolean>
-  clear: (keepPinned: boolean) => Promise<boolean>
+  clear: (keepPinned: boolean) => Promise<{ cleared: number }>
   getImages: (ids: string[]) => Promise<Record<string, ImageAsset>>
   updateSettings: (patch: Partial<Settings>) => Promise<{ settings: Settings; hotkeyOk: boolean }>
   openDataDir: () => Promise<string>
