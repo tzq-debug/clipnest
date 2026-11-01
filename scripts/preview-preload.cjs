@@ -168,8 +168,8 @@ const api = {
   },
   reveal: async () => true,
   clear: async () => {
-    const cleared = state.items.filter((i) => !i.pinned && !i.starred).length
-    state.items = state.items.filter((i) => i.pinned || i.starred)
+    const cleared = state.items.filter((i) => !i.starred).length
+    state.items = state.items.filter((i) => i.starred)
     push()
     return { cleared }
   },

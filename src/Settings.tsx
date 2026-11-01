@@ -360,7 +360,7 @@ export default function Settings({
               <FolderIcon size={13} /> 打开目录
             </button>
           </Row>
-          <Row title="清空历史" hint="收藏和置顶的记录会被保留">
+          <Row title="清空历史" hint="只保留收藏的，置顶的也会被清掉">
             {confirmClear ? (
               <div className="row-actions">
                 <button className="chip-btn" onClick={() => setConfirmClear(false)}>

@@ -53,8 +53,9 @@ function migrateItems(saved) {
   return items.map((it) => ({ ...it, starred: Boolean(it.pinned) }))
 }
 
-function isMarked(item) {
-  return Boolean(item.pinned || item.starred)
+/** 收藏 is the only thing that protects an entry. 置顶 is just ordering. */
+function isKept(item) {
+  return Boolean(item.starred)
 }
 
 class Store {
@@ -241,9 +242,9 @@ class Store {
     return true
   }
 
-  clear(keepMarked = true) {
-    const keep = keepMarked ? this.items.filter(isMarked) : []
-    const drop = keepMarked ? this.items.filter((it) => !isMarked(it)) : this.items
+  clear(keepStarred = true) {
+    const keep = keepStarred ? this.items.filter(isKept) : []
+    const drop = keepStarred ? this.items.filter((it) => !isKept(it)) : this.items
     drop.forEach((it) => this.dropAssets(it))
     this.items = keep
     this.scheduleSave()
@@ -254,7 +255,7 @@ class Store {
     while (this.items.length > max) {
       let idx = -1
       for (let i = this.items.length - 1; i >= 0; i--) {
-        if (!isMarked(this.items[i])) {
+        if (!isKept(this.items[i])) {
           idx = i
           break
         }

@@ -510,11 +510,10 @@ function registerIpc() {
     return true
   })
 
-  ipcMain.handle('items:clear', (_e, keepMarked) => {
+  ipcMain.handle('items:clear', (_e, keepStarred) => {
     if (vaultLocked) return { cleared: 0 }
-    const keep = keepMarked !== false
-    const marked = (it) => it.pinned || it.starred
-    const cleared = store.all().filter((it) => !keep || !marked(it)).length
+    const keep = keepStarred !== false
+    const cleared = store.all().filter((it) => !keep || !it.starred).length
     store.clear(keep)
     pushState()
     if (tray) tray.setContextMenu(buildTrayMenu())

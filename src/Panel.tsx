@@ -120,8 +120,8 @@ export default function Panel({ state }: { state: AppState }) {
   // expired: a slower second click just re-armed the button and nothing
   // happened. The confirm now stays on screen until you pick one of the two
   // buttons, so the state can never vanish between clicks.
-  const clearable = items.filter((it) => !it.pinned && !it.starred).length
-  const marked = items.filter((it) => it.pinned || it.starred).length
+  const clearable = items.filter((it) => !it.starred).length
+  const keptStarred = items.filter((it) => it.starred).length
 
   const askClear = useCallback(() => {
     if (!clearable) {
@@ -138,8 +138,12 @@ export default function Panel({ state }: { state: AppState }) {
     const res = await window.clipnest.clear(true)
     setSelected([])
     setSelectMode(false)
-    setToast(res.cleared ? `已清空 ${res.cleared} 条${marked ? `，${marked} 条收藏/置顶已保留` : ''}` : '没有可清理的记录')
-  }, [marked])
+    setToast(
+      res.cleared
+        ? `已清空 ${res.cleared} 条${keptStarred ? `，${keptStarred} 条收藏已保留` : ''}`
+        : '没有可清理的记录'
+    )
+  }, [keptStarred])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -354,7 +358,7 @@ export default function Panel({ state }: { state: AppState }) {
               <div className="selbar-count">
                 <TrashIcon size={14} />
                 清空 <strong>{clearable}</strong> 条记录
-                <span className="confirm-note">收藏和置顶会保留</span>
+                <span className="confirm-note">收藏保留，置顶清空</span>
               </div>
               <div className="selbar-actions">
                 <button className="ghost-btn" onClick={() => setConfirmClear(false)}>

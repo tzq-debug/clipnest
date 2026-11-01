@@ -33,7 +33,7 @@ The merged text is joined in the order you see on screen, with a separator you c
 - **Click to enlarge** — thumbnails open a preview; copy from there or hand it to your system image viewer.
 - **Search and filters** — live search, filter by text / image / file / starred.
 - **Star and pin are separate** — 收藏 (star) keeps an entry in the 收藏 filter and survives cleanup; 置顶 (pin) only floats it to the top of the list.
-- **One-click clean** — the trash button asks for confirmation in a bar at the bottom, then clears everything except starred and pinned entries.
+- **One-click clean** — the trash button asks for confirmation in a bar at the bottom, then clears everything except starred entries. Pinned entries go too: pinning is only about order.
 - **Optional encryption** — a password encrypts the history and every stored image with AES-256-GCM; the app asks for it on each start.
 - **Secrets are treated differently** — API keys, private keys, JWTs, ID and card numbers are recognised as you copy them, sealed with the OS key and masked in the list. No master password needed.
 - **Private by design** — no account, no network, no telemetry.
