@@ -41,7 +41,7 @@ ClipNest：勾选三条 → 合并复制 → 回到目标窗口按一次 `Ctrl+V
 
 ### 直接下载
 
-到 [Releases](https://github.com/your-name/clipnest/releases) 下载对应系统的安装包：
+到 [Releases](https://github.com/tzq-debug/clipnest/releases) 下载对应系统的安装包：
 
 | 系统 | 文件 |
 | --- | --- |
@@ -49,14 +49,13 @@ ClipNest：勾选三条 → 合并复制 → 回到目标窗口按一次 `Ctrl+V
 | macOS | `ClipNest-x.y.z.dmg` |
 | Linux | `ClipNest-x.y.z.AppImage` |
 
-> 文档里的 `your-name` 是占位符。准备发布时把它换成你自己的 GitHub 用户名，`README.md` 和 `package.json` 里各一处。
 
 ### 从源码运行
 
 需要 Node.js 20 以上。
 
 ```bash
-git clone https://github.com/your-name/clipnest.git
+git clone https://github.com/tzq-debug/clipnest.git
 cd clipnest
 npm install
 npm run dev

@@ -6,13 +6,13 @@
   "description": "Clipboard history with multi-select batch paste. Edge-docked, always one keystroke away.",
   "license": "MIT",
   "author": "ClipNest contributors",
-  "homepage": "https://github.com/your-name/clipnest",
+  "homepage": "https://github.com/tzq-debug/clipnest",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-name/clipnest.git"
+    "url": "https://github.com/tzq-debug/clipnest.git"
   },
   "bugs": {
-    "url": "https://github.com/your-name/clipnest/issues"
+    "url": "https://github.com/tzq-debug/clipnest/issues"
   },
   "keywords": [
     "clipboard",
