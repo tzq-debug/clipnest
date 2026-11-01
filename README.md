@@ -161,6 +161,8 @@ CLIPNEST_ELECTRON_ARGS="--no-sandbox --no-proxy-server" npm run dev
 
 如果 `npm run dev` 起来之后看不到窗口，多半是开发服务器被系统代理拦了——加 `--no-proxy-server` 即可（打包后的应用不联网，不受影响）。
 
+Windows 上也可以直接双击项目根目录的 `dev.bat`，它会带着参数启动并保持窗口。`
+
 几个实现上的注意点，改代码前值得知道：
 
 - Electron 45 起 `clipboard` 换成了 W3C 风格的异步 API（`read()` / `write(ClipboardItem[])`），旧的 `availableFormats`、`readBuffer` 已经不存在了
