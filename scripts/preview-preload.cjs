@@ -112,7 +112,10 @@ const api = {
   },
   hover: async () => true,
   dismiss: async () => true,
-  copy: async () => ({ ok: true, message: '预览模式不会真的写剪贴板' }),
+  copy: async (ids, mode) => {
+    console.log('[mock-copy]', mode, JSON.stringify(ids))
+    return { ok: true, message: '预览模式不会真的写剪贴板' }
+  },
   pin: async (id, value) => {
     const it = state.items.find((i) => i.id === id)
     if (it) it.pinned = value

@@ -39,6 +39,21 @@ app.whenReady().then(async () => {
   await win.loadFile(path.join(ROOT, 'dist', 'index.html'))
   await wait(700)
 
+  win.webContents.on('console-message', (...args) => {
+    const first = args[0]
+    const msg = (first && first.message) || args[2]
+    if (typeof msg === 'string' && msg.includes('[mock-copy]')) console.log('RENDERER>', msg)
+  })
+
+  if (scenario === 'click') {
+    await win.webContents.executeJavaScript(`
+      const cards = document.querySelectorAll('.card')
+      cards[4].dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+      'clicked card 4'
+    `)
+    await wait(500)
+  }
+
   if (scenario === 'selected') {
     await win.webContents.executeJavaScript(
       `document.querySelectorAll('.check').forEach((b, i) => { if ([0, 4, 5].includes(i)) b.click() })`

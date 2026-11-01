@@ -75,8 +75,14 @@ export default function Panel({ state }: { state: AppState }) {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }, [])
 
-  const runCopy = useCallback(async (mode: 'merged' | 'sequential') => {
-    const ids = orderedSelection.length ? orderedSelection : filtered[active] ? [filtered[active].id] : []
+  const runCopy = useCallback(async (mode: 'merged' | 'sequential', explicitIds?: string[]) => {
+    const ids = explicitIds?.length
+      ? explicitIds
+      : orderedSelection.length
+        ? orderedSelection
+        : filtered[active]
+          ? [filtered[active].id]
+          : []
     if (!ids.length) return
     const res = await window.clipnest.copy(ids, mode)
     if (!res.ok) setToast(res.message)
@@ -228,7 +234,10 @@ export default function Panel({ state }: { state: AppState }) {
                   active={idx === active}
                   selected={selected.includes(item.id)}
                   asset={images[item.id]}
-                  onActivate={() => runCopy('merged')}
+                  onActivate={() => {
+                    setActive(idx)
+                    runCopy('merged', [item.id])
+                  }}
                   onToggleSelect={() => toggleSelect(item.id)}
                   onPin={() => window.clipnest.pin(item.id, !item.pinned)}
                   onRemove={() => window.clipnest.remove(item.id)}
