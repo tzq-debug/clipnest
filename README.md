@@ -4,7 +4,14 @@
 
 > 大部分剪贴板工具解决的是「找回来」；ClipNest 多解决一步「凑起来」。
 
-![ClipNest 面板](assets/screenshot.png)
+![ClipNest 面板](docs/screenshot.png)
+
+<details>
+<summary>多选模式长什么样</summary>
+
+![多选模式](docs/screenshot-select.png)
+
+</details>
 
 ---
 
@@ -27,7 +34,7 @@ ClipNest：勾选三条 → 合并复制 → 回到目标窗口按一次 `Ctrl+V
 - **点开看大图**：点图片缩略图弹出预览，可以用系统看图程序打开，或直接复制
 - **搜索与筛选**：实时搜索内容，按文本 / 图片 / 文件 / 收藏筛选
 - **固定收藏**：重要的条目钉在顶部，不会被自动清理
-- **隐私控制**：忽略关键词、单条字数上限、暂停记录、一键清空
+- **隐私控制**：忽略关键词、单条字数上限、暂停记录
 - **纯本地**：不联网、不上传、无账号
 
 ## 安装
@@ -41,6 +48,8 @@ ClipNest：勾选三条 → 合并复制 → 回到目标窗口按一次 `Ctrl+V
 | Windows | `ClipNest-x.y.z-x64.exe` |
 | macOS | `ClipNest-x.y.z.dmg` |
 | Linux | `ClipNest-x.y.z.AppImage` |
+
+> 文档里的 `your-name` 是占位符。准备发布时把它换成你自己的 GitHub 用户名，`README.md` 和 `package.json` 里各一处。
 
 ### 从源码运行
 
@@ -129,21 +138,32 @@ npx electron . --no-sandbox
 
 正常桌面环境不需要加这个参数。
 
-## 开发
+## 项目结构
 
 ```
-electron/
-  main.cjs       主进程：窗口形态、托盘、快捷键、IPC
-  watcher.cjs    剪贴板轮询与内容识别
-  store.cjs      历史与设置持久化
-  paste.cjs      剪贴板写入与按键模拟
-  preload.cjs    contextBridge 暴露的 API
-src/             React 渲染层
-scripts/         开发脚本
-  dev.mjs            vite + electron 联合启动
-  preview.cjs        用假数据渲染界面并截图，不碰系统剪贴板
-  probe-clipboard.cjs 打印当前剪贴板的所有 MIME 类型，排查平台差异用
-  make-icons.py      用 Pillow 重新生成图标
+electron/            主进程（纯 CommonJS，不需要编译）
+  main.cjs             窗口形态、托盘、全局快捷键、IPC
+  watcher.cjs          剪贴板轮询与内容识别
+  store.cjs            历史与设置持久化
+  paste.cjs            剪贴板写入与按键模拟
+  preload.cjs          contextBridge 暴露给渲染层的 API
+src/                 渲染层（React + TypeScript）
+  App.tsx              按窗口形态切换贴边条 / 面板
+  Panel.tsx            列表、搜索、筛选、多选、清理
+  ItemCard.tsx         单条记录
+  PreviewOverlay.tsx   图片大图预览
+  Settings.tsx         设置页
+  DockStrip.tsx        屏幕边缘的常驻小条
+  styles.css           全部样式，含深色模式变量
+scripts/             开发期脚本，不进安装包
+  dev.mjs              vite + electron 联合启动
+  preview.cjs          用假数据渲染界面并截图，不碰系统剪贴板
+  preview-preload.cjs  预览用的假 API
+  probe-clipboard.cjs  打印剪贴板里所有 MIME 类型，排查平台差异
+  make-icons.py        重新生成图标（需要 pip install pillow）
+assets/              运行时资源：应用图标、托盘图标
+build/               打包用图标（icon.ico / icon.png）
+docs/                文档截图
 ```
 
 技术栈：Electron + React + TypeScript + Vite。没有任何原生模块，`npm install` 之后直接能跑。
@@ -162,7 +182,7 @@ CLIPNEST_ELECTRON_ARGS="--no-sandbox --no-proxy-server" npm run dev
 
 如果 `npm run dev` 起来之后看不到窗口，多半是开发服务器被系统代理拦了——加 `--no-proxy-server` 即可（打包后的应用不联网，不受影响）。
 
-Windows 上也可以直接双击项目根目录的 `dev.bat`，它会带着参数启动并保持窗口。`
+Windows 上也可以直接双击项目根目录的 `dev.bat`，它会带着参数启动并保持窗口。
 
 几个实现上的注意点，改代码前值得知道：
 
@@ -179,6 +199,10 @@ Windows 上也可以直接双击项目根目录的 `dev.bat`，它会带着参�
 - [ ] 剪贴板内容来源应用识别与规则
 - [ ] 分组与标签
 - [ ] 多设备同步（自建，非云）
+
+## 版本记录
+
+每个版本的改动见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可
 

@@ -49,12 +49,10 @@ def main():
 
     icon512 = build_icon(512)
     icon512.save(ASSETS / "icon.png")
-
-    for s in (16, 24, 32, 48, 64, 128, 256):
-        build_icon(s).save(BUILD / f"icon-{s}.png")
-
     build_icon(64).save(ASSETS / "tray.png")
 
+    # electron-builder reads these two; everything else is derived from them.
+    icon512.save(BUILD / "icon.png")
     icon512.save(
         BUILD / "icon.ico",
         sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)],

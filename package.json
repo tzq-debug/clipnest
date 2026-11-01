@@ -1,16 +1,36 @@
 {
   "name": "clipnest",
   "productName": "ClipNest",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Clipboard history with multi-select batch paste. Edge-docked, always one keystroke away.",
   "license": "MIT",
   "author": "ClipNest contributors",
   "homepage": "https://github.com/your-name/clipnest",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-name/clipnest.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-name/clipnest/issues"
+  },
+  "keywords": [
+    "clipboard",
+    "clipboard-manager",
+    "clipboard-history",
+    "paste",
+    "electron",
+    "desktop",
+    "productivity"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "vite build",
+    "typecheck": "tsc --noEmit",
     "start": "npm run build && electron .",
     "preview": "vite build && electron scripts/preview.cjs list",
     "pack": "vite build && electron-builder --dir",
