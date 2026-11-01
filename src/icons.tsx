@@ -110,6 +110,13 @@ export const ArrowLeftIcon = (p: IconProps) => (
   </svg>
 )
 
+export const LockIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="5" y="10.5" width="14" height="9.5" rx="2.5" />
+    <path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" />
+  </svg>
+)
+
 export const LayersIcon = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M12 3 3.5 7.5 12 12l8.5-4.5L12 3Z" />

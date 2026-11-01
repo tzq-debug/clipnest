@@ -14,6 +14,9 @@ app.disableHardwareAcceleration()
 const ROOT = path.join(__dirname, '..')
 const scenario = process.argv[2] || 'list'
 
+if (scenario === 'lock') process.env.CLIPNEST_PREVIEW_LOCKED = '1'
+if (scenario === 'encrypted') process.env.CLIPNEST_PREVIEW_ENCRYPTED = '1'
+
 const SIZES = {
   dock: { width: 26, height: 152 },
   default: { width: 520, height: 648 }
@@ -44,6 +47,22 @@ app.whenReady().then(async () => {
     const msg = (first && first.message) || args[2]
     if (typeof msg === 'string' && msg.includes('[mock-copy]')) console.log('RENDERER>', msg)
   })
+
+  if (scenario === 'lock') {
+    await win.webContents.executeJavaScript(`document.querySelector('.lock-input')?.focus()`)
+    await wait(500)
+  }
+
+  if (scenario === 'encrypted') {
+    await win.webContents.executeJavaScript(`document.querySelector('[title="设置"]').click()`)
+    await wait(300)
+    await win.webContents.executeJavaScript(`
+      const rows = document.querySelectorAll('.row')
+      for (const r of rows) { if (r.textContent.includes('加密历史')) r.scrollIntoView({ block: 'center' }) }
+      'scrolled'
+    `)
+    await wait(400)
+  }
 
   if (scenario === 'clear') {
     await win.webContents.executeJavaScript(`document.querySelector('.icon-btn[aria-label="清理历史"]').click()`)

@@ -50,6 +50,10 @@ contextBridge.exposeInMainWorld('clipnest', {
   getImages: (ids) => ipcRenderer.invoke('images:get', ids),
 
   updateSettings: (patch) => ipcRenderer.invoke('settings:update', patch),
+  unlockVault: (password) => ipcRenderer.invoke('vault:unlock', password),
+  lockVault: () => ipcRenderer.invoke('vault:lock'),
+  enableEncryption: (password) => ipcRenderer.invoke('vault:enable', password),
+  disableEncryption: (password) => ipcRenderer.invoke('vault:disable', password),
   openDataDir: () => ipcRenderer.invoke('app:openData'),
   appInfo: () => ipcRenderer.invoke('app:info'),
   quit: () => ipcRenderer.invoke('app:quit')

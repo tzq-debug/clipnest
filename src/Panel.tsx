@@ -232,6 +232,7 @@ export default function Panel({ state }: { state: AppState }) {
         <Settings
           settings={settings}
           hotkeyOk={state.hotkeyOk}
+          encrypted={state.encrypted}
           version={state.version}
           dataDir={state.dataDir}
           onUpdate={update}

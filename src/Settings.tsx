@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import type { MergeSeparator, Settings as SettingsType } from './types'
-import { ArrowLeftIcon, FolderIcon, PauseIcon, TrashIcon } from './icons'
+import { ArrowLeftIcon, FolderIcon, LockIcon, PauseIcon, TrashIcon } from './icons'
 import { acceleratorLabel } from './utils'
 
 interface Props {
   settings: SettingsType
   hotkeyOk: boolean
+  encrypted: boolean
   version: string
   dataDir: string
   onUpdate: (patch: Partial<SettingsType>) => void
@@ -51,6 +52,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 export default function Settings({
   settings,
   hotkeyOk,
+  encrypted,
   version,
   dataDir,
   onUpdate,
@@ -60,6 +62,37 @@ export default function Settings({
   const [capturing, setCapturing] = useState(false)
   const [keywords, setKeywords] = useState(settings.ignoreKeywords.join('\n'))
   const [confirmClear, setConfirmClear] = useState(false)
+  const [encMode, setEncMode] = useState<'idle' | 'enable' | 'disable'>('idle')
+  const [pass1, setPass1] = useState('')
+  const [pass2, setPass2] = useState('')
+  const [encMsg, setEncMsg] = useState('')
+  const [encBusy, setEncBusy] = useState(false)
+
+  const resetEncForm = () => {
+    setEncMode('idle')
+    setPass1('')
+    setPass2('')
+    setEncMsg('')
+  }
+
+  const doEnable = async () => {
+    if (pass1.length < 4) return setEncMsg('密码至少 4 位')
+    if (pass1 !== pass2) return setEncMsg('两次输入不一致')
+    setEncBusy(true)
+    const res = await window.clipnest.enableEncryption(pass1)
+    setEncBusy(false)
+    if (!res.ok) return setEncMsg(res.message || '开启失败')
+    resetEncForm()
+  }
+
+  const doDisable = async () => {
+    if (!pass1) return setEncMsg('请输入当前密码')
+    setEncBusy(true)
+    const res = await window.clipnest.disableEncryption(pass1)
+    setEncBusy(false)
+    if (!res.ok) return setEncMsg(res.message || '关闭失败')
+    resetEncForm()
+  }
 
   useEffect(() => {
     setKeywords(settings.ignoreKeywords.join('\n'))
@@ -195,6 +228,91 @@ export default function Settings({
         </Group>
 
         <Group title="隐私">
+          <Row title="加密历史" hint="开启后启动要输密码解锁，文字和图片一起加密">
+            <Switch
+              label="加密历史"
+              checked={encrypted}
+              onChange={(v) => {
+                setEncMsg('')
+                setPass1('')
+                setPass2('')
+                setEncMode(v ? 'enable' : 'disable')
+              }}
+            />
+          </Row>
+
+          {encMode === 'enable' && (
+            <div className="enc-box">
+              <p className="enc-warn">
+                密码只存在你脑子里。忘掉就解不开，里面的历史会永久丢失，没有找回渠道。
+              </p>
+              <input
+                className="enc-input"
+                type="password"
+                placeholder="设置密码（至少 4 位）"
+                value={pass1}
+                autoFocus
+                onChange={(e) => {
+                  setPass1(e.target.value)
+                  setEncMsg('')
+                }}
+              />
+              <input
+                className="enc-input"
+                type="password"
+                placeholder="再输一次"
+                value={pass2}
+                onChange={(e) => {
+                  setPass2(e.target.value)
+                  setEncMsg('')
+                }}
+              />
+              {encMsg && <p className="enc-err">{encMsg}</p>}
+              <div className="enc-actions">
+                <button className="ghost-btn" onClick={resetEncForm}>
+                  取消
+                </button>
+                <button className="primary-btn" disabled={encBusy} onClick={doEnable}>
+                  <LockIcon size={12} /> {encBusy ? '加密中…' : '开启加密'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {encMode === 'disable' && (
+            <div className="enc-box">
+              <p className="enc-warn">关闭后历史会恢复成明文保存在本机，任何人打开文件夹都能看到。</p>
+              <input
+                className="enc-input"
+                type="password"
+                placeholder="当前密码"
+                value={pass1}
+                autoFocus
+                onChange={(e) => {
+                  setPass1(e.target.value)
+                  setEncMsg('')
+                }}
+              />
+              {encMsg && <p className="enc-err">{encMsg}</p>}
+              <div className="enc-actions">
+                <button className="ghost-btn" onClick={resetEncForm}>
+                  取消
+                </button>
+                <button className="primary-btn" disabled={encBusy} onClick={doDisable}>
+                  {encBusy ? '解密中…' : '关闭并解密'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {encrypted && encMode === 'idle' && (
+            <Row title="立即锁定" hint="清空内存里的历史，重新输密码才能查看">
+              <button className="chip-btn" onClick={() => window.clipnest.lockVault()}>
+                <LockIcon size={13} /> 锁定
+              </button>
+            </Row>
+          )}
+
           <div className="row row-block">
             <div className="row-label">
               <span>忽略关键词</span>

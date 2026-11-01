@@ -4,6 +4,8 @@ const fs = require('node:fs')
 const path = require('node:path')
 const crypto = require('node:crypto')
 
+const { Vault, encrypt, decrypt, isEncrypted } = require('./vault.cjs')
+
 const DEFAULT_SETTINGS = {
   maxItems: 500,
   paused: false,
@@ -40,14 +42,113 @@ class Store {
     this.dir = dir
     this.imagesDir = path.join(dir, 'images')
     this.historyFile = path.join(dir, 'history.json')
+    this.encryptedFile = path.join(dir, 'history.enc')
     this.settingsFile = path.join(dir, 'settings.json')
     fs.mkdirSync(this.imagesDir, { recursive: true })
 
-    const saved = safeRead(this.historyFile, { items: [] })
-    this.items = Array.isArray(saved.items) ? saved.items : []
+    this.vault = new Vault(dir)
+    this.key = null
+    this.items = []
     this.settings = { ...DEFAULT_SETTINGS, ...safeRead(this.settingsFile, {}) }
     this.saveTimer = null
     this.dirty = false
+
+    if (!this.vault.enabled) this.loadPlaintext()
+  }
+
+  /* ---------- vault ---------- */
+
+  get locked() {
+    return this.vault.enabled && !this.key
+  }
+
+  loadPlaintext() {
+    const saved = safeRead(this.historyFile, { items: [] })
+    this.items = Array.isArray(saved.items) ? saved.items : []
+  }
+
+  /** Open the vault with an already verified key and load the history. */
+  unlock(key) {
+    this.key = key
+    if (fs.existsSync(this.encryptedFile)) {
+      const data = JSON.parse(decrypt(key, fs.readFileSync(this.encryptedFile)).toString('utf8'))
+      this.items = Array.isArray(data.items) ? data.items : []
+    } else {
+      this.items = []
+    }
+    this.dirty = false
+    return this.items.length
+  }
+
+  lock() {
+    this.flush()
+    this.key = null
+    this.items = []
+    this.dirty = false
+  }
+
+  /** Encrypt everything that is currently on disk, then switch the vault on. */
+  enableEncryption(password) {
+    if (this.vault.enabled) return { ok: false, message: '加密已经开启' }
+    const key = this.vault.create(password)
+    this.key = key
+    this.encryptExistingImages(key)
+    this.dirty = true
+    this.flush()
+    try {
+      fs.unlinkSync(this.historyFile)
+    } catch {
+      /* already gone */
+    }
+    return { ok: true }
+  }
+
+  /** Decrypt everything back to plain files and switch the vault off. */
+  disableEncryption(password) {
+    if (!this.vault.enabled) return { ok: false, message: '加密没有开启' }
+    const key = this.vault.unlock(password)
+    if (!key) return { ok: false, message: '密码不对' }
+    this.key = key
+    for (const name of this.imageFiles()) {
+      const file = path.join(this.imagesDir, name)
+      const raw = fs.readFileSync(file)
+      if (isEncrypted(raw)) fs.writeFileSync(file, decrypt(key, raw))
+    }
+    this.vault.disable()
+    this.dirty = true
+    this.flush()
+    try {
+      fs.unlinkSync(this.encryptedFile)
+    } catch {
+      /* already gone */
+    }
+    this.key = null
+    return { ok: true }
+  }
+
+  imageFiles() {
+    try {
+      return fs.readdirSync(this.imagesDir).filter((n) => !n.endsWith('.tmp'))
+    } catch {
+      return []
+    }
+  }
+
+  encryptExistingImages(key) {
+    for (const name of this.imageFiles()) {
+      const file = path.join(this.imagesDir, name)
+      try {
+        const raw = fs.readFileSync(file)
+        if (!isEncrypted(raw)) fs.writeFileSync(file, encrypt(key, raw))
+      } catch {
+        /* skip unreadable files */
+      }
+    }
+  }
+
+  writeImageFile(name, buffer) {
+    const data = this.vault.enabled && this.key ? encrypt(this.key, buffer) : buffer
+    fs.writeFileSync(path.join(this.imagesDir, name), data)
   }
 
   /* ---------- settings ---------- */
@@ -160,10 +261,18 @@ class Store {
 
   flush() {
     if (!this.dirty) return
+    if (this.locked) return // never overwrite the vault with an empty list
     this.dirty = false
+    const json = JSON.stringify({ version: 1, items: this.items })
     try {
-      atomicWrite(this.historyFile, JSON.stringify({ version: 1, items: this.items }))
+      if (this.vault.enabled) {
+        if (!this.key) return
+        atomicWrite(this.encryptedFile, encrypt(this.key, Buffer.from(json)))
+      } else {
+        atomicWrite(this.historyFile, json)
+      }
     } catch (err) {
+      this.dirty = true
       console.error('[clipnest] failed to persist history', err)
     }
   }
@@ -187,14 +296,14 @@ class Store {
     const size = image.getSize()
 
     const file = `${id}.png`
-    fs.writeFileSync(path.join(this.imagesDir, file), buffer)
+    this.writeImageFile(file, buffer)
 
     let thumb = null
     try {
       const tw = Math.min(360, size.width)
       const resized = tw < size.width ? image.resize({ width: tw, quality: 'good' }) : image
       thumb = `${id}.thumb.png`
-      fs.writeFileSync(path.join(this.imagesDir, thumb), resized.toPNG())
+      this.writeImageFile(thumb, resized.toPNG())
     } catch {
       thumb = null
     }
@@ -225,8 +334,8 @@ class Store {
       const big = `${id}.big.png`
       const fit = (max) => (size.width > max ? image.resize({ width: max, quality: 'good' }) : image)
 
-      fs.writeFileSync(path.join(this.imagesDir, thumb), fit(360).toPNG())
-      fs.writeFileSync(path.join(this.imagesDir, big), fit(1400).toPNG())
+      this.writeImageFile(thumb, fit(360).toPNG())
+      this.writeImageFile(big, fit(1400).toPNG())
 
       return { thumb, big, width: size.width, height: size.height }
     } catch {
@@ -237,7 +346,12 @@ class Store {
   readImageAsset(fileName) {
     if (!fileName) return null
     try {
-      const buf = fs.readFileSync(path.join(this.imagesDir, fileName))
+      const raw = fs.readFileSync(path.join(this.imagesDir, fileName))
+      let buf = raw
+      if (isEncrypted(raw)) {
+        if (!this.key) return null
+        buf = decrypt(this.key, raw)
+      }
       return `data:image/png;base64,${buf.toString('base64')}`
     } catch {
       return null

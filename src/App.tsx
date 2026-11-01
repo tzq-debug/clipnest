@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { AppState } from './types'
 import Panel from './Panel'
 import DockStrip from './DockStrip'
+import LockScreen from './LockScreen'
 
 export default function App() {
   const [state, setState] = useState<AppState | null>(null)
@@ -38,6 +39,14 @@ export default function App() {
   }, [themeSetting])
 
   if (!state) return <div className="boot" />
+
+  if (state.locked) {
+    return (
+      <div className="stage">
+        <LockScreen />
+      </div>
+    )
+  }
 
   const isDock = state.view === 'collapsed'
 

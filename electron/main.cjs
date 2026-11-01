@@ -37,6 +37,7 @@ let pendingTimer = null
 let collapseTimer = null
 let pushTimer = null
 let modalOpen = false
+let vaultLocked = false
 
 if (process.platform === 'win32') app.setAppUserModelId('com.clipnest.app')
 
@@ -162,8 +163,10 @@ function publicItem(item) {
 function statePayload() {
   return {
     view,
-    items: store.all().filter((it) => it.type !== 'image' || it.image).map(publicItem),
+    locked: vaultLocked,
+    items: vaultLocked ? [] : store.all().filter((it) => it.type !== 'image' || it.image).map(publicItem),
     settings: store.settings,
+    encrypted: store.vault.enabled,
     hotkeyOk,
     version: app.getVersion(),
     platform: process.platform,
@@ -233,13 +236,23 @@ function collapsePanel({ dismiss = false } = {}) {
   }, 130)
 }
 
-function scheduleCollapse() {
-  if (view !== 'expanded' || locked) return
+function scheduleCollapse() {  if (view !== 'expanded' || locked) return
   if (collapseTimer) clearTimeout(collapseTimer)
   collapseTimer = setTimeout(() => {
     collapseTimer = null
     if (view === 'expanded' && !locked) collapsePanel()
   }, 320)
+}
+
+/** Drop the key, stop recording, and put the lock screen in front. */
+function lockVault() {
+  if (!store.vault.enabled) return
+  if (watcher) watcher.stop()
+  store.lock()
+  vaultLocked = true
+  if (view === 'collapsed') showPalette()
+  pushState()
+  if (tray) tray.setContextMenu(buildTrayMenu())
 }
 
 /* ------------------------------------------------------------------ window */
@@ -284,6 +297,10 @@ function createWindow() {
   }
 
   win.once('ready-to-show', () => {
+    if (vaultLocked) {
+      showPalette()
+      return
+    }
     if (!store.settings.showDock) return
     win.showInactive()
   })
@@ -339,6 +356,11 @@ function buildTrayMenu() {
     },
     { type: 'separator' },
     {
+      label: '锁定',
+      enabled: store.vault.enabled && !vaultLocked,
+      click: () => lockVault()
+    },
+    {
       label: '清空历史（保留收藏）',
       click: () => {
         store.clear(true)
@@ -382,6 +404,50 @@ function registerShortcut(accel) {
 function registerIpc() {
   ipcMain.handle('state:get', () => statePayload())
 
+  /* ---------- vault ---------- */
+
+  ipcMain.handle('vault:unlock', (_e, password) => {
+    const key = store.vault.unlock(String(password || ''))
+    if (!key) return { ok: false, message: '密码不对' }
+    try {
+      const count = store.unlock(key)
+      vaultLocked = false
+      watcher.start()
+      setTimeout(backfillImageFiles, 900)
+      pushState()
+      return { ok: true, count }
+    } catch (err) {
+      return { ok: false, message: `解密失败：${err.message}` }
+    }
+  })
+
+  ipcMain.handle('vault:lock', () => {
+    if (!store.vault.enabled) return { ok: false }
+    lockVault()
+    return { ok: true }
+  })
+
+  ipcMain.handle('vault:enable', (_e, password) => {
+    if (vaultLocked) return { ok: false, message: '请先解锁' }
+    const pass = String(password || '')
+    if (pass.length < 4) return { ok: false, message: '密码至少 4 位' }
+    const res = store.enableEncryption(pass)
+    pushState()
+    if (tray) tray.setContextMenu(buildTrayMenu())
+    return res
+  })
+
+  ipcMain.handle('vault:disable', (_e, password) => {
+    const res = store.disableEncryption(String(password || ''))
+    if (res.ok) {
+      vaultLocked = false
+      watcher.start()
+      pushState()
+      if (tray) tray.setContextMenu(buildTrayMenu())
+    }
+    return res
+  })
+
   ipcMain.handle('view:set', (_e, next) => {
     if (next === 'expanded') expandPanel()
     else if (next === 'palette') showPalette()
@@ -412,6 +478,7 @@ function registerIpc() {
   })
 
   ipcMain.handle('item:pin', (_e, id, value) => {
+    if (vaultLocked) return false
     store.togglePin(id, value)
     pushState()
     if (tray) tray.setContextMenu(buildTrayMenu())
@@ -419,6 +486,7 @@ function registerIpc() {
   })
 
   ipcMain.handle('item:remove', (_e, id) => {
+    if (vaultLocked) return false
     store.remove(id)
     pushState()
     return true
@@ -433,6 +501,7 @@ function registerIpc() {
   })
 
   ipcMain.handle('items:clear', (_e, keepPinned) => {
+    if (vaultLocked) return { cleared: 0 }
     const keep = keepPinned !== false
     const cleared = store.all().filter((it) => !keep || !it.pinned).length
     store.clear(keep)
@@ -475,6 +544,7 @@ function registerIpc() {
   })
 
   ipcMain.handle('copy', async (_e, payload) => {
+    if (vaultLocked) return { ok: false, message: '请先解锁' }
     const ids = (payload && payload.ids) || []
     const mode = (payload && payload.mode) || 'merged'
     const items = ids.map((id) => store.get(id)).filter(Boolean)
@@ -545,6 +615,7 @@ function registerIpc() {
  * earlier show up under the picture filter too.
  */
 function backfillImageFiles() {
+  if (vaultLocked) return
   const IMAGE_RE = /\.(png|jpe?g|gif|webp|bmp|tiff?|avif)$/i
   let changed = false
   for (const item of store.all()) {
@@ -569,6 +640,7 @@ function backfillImageFiles() {
 
 app.whenReady().then(() => {
   store = new Store(app.getPath('userData'))
+  vaultLocked = store.vault.enabled
 
   if (process.argv.includes('--hidden') && !store.settings.showDock) {
     // started by the login item, stay quiet
@@ -586,9 +658,11 @@ app.whenReady().then(() => {
       if (tray) tray.setContextMenu(buildTrayMenu())
     }
   })
-  watcher.start()
 
-  setTimeout(backfillImageFiles, 900)
+  if (!vaultLocked) {
+    watcher.start()
+    setTimeout(backfillImageFiles, 900)
+  }
 
   screen.on('display-metrics-changed', () => {
     if (!win || win.isDestroyed()) return

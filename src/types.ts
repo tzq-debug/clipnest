@@ -43,6 +43,8 @@ export type View = 'collapsed' | 'expanded' | 'palette'
 
 export interface AppState {
   view: View
+  locked: boolean
+  encrypted: boolean
   items: ClipItem[]
   settings: Settings
   hotkeyOk: boolean
@@ -78,6 +80,10 @@ export interface ClipNestApi {
   clear: (keepPinned: boolean) => Promise<{ cleared: number }>
   getImages: (ids: string[]) => Promise<Record<string, ImageAsset>>
   updateSettings: (patch: Partial<Settings>) => Promise<{ settings: Settings; hotkeyOk: boolean }>
+  unlockVault: (password: string) => Promise<{ ok: boolean; message?: string; count?: number }>
+  lockVault: () => Promise<{ ok: boolean }>
+  enableEncryption: (password: string) => Promise<{ ok: boolean; message?: string }>
+  disableEncryption: (password: string) => Promise<{ ok: boolean; message?: string }>
   openDataDir: () => Promise<string>
   appInfo: () => Promise<{ version: string; dataDir: string; platform: string; electron: string }>
   quit: () => Promise<void>

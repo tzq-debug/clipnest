@@ -34,6 +34,7 @@ The merged text is joined in the order you see on screen, with a separator you c
 - **Search and filters** — live search, filter by text / image / file / pinned.
 - **Pin favourites** — keep important entries on top, out of reach of auto-cleanup.
 - **One-click clean** — the trash button clears history but keeps pinned entries.
+- **Optional encryption** — a password encrypts the history and every stored image with AES-256-GCM; the app asks for it on each start.
 - **Private by design** — no account, no network, no telemetry.
 
 ## Install
@@ -112,7 +113,18 @@ images/          images and thumbnails
 
 Delete that folder to wipe everything; Settings has a button that opens it for you.
 
-**Note:** history is stored in plain text. If you copy passwords or tokens, add keywords such as `password` or `token` to **Ignore keywords**, or hit **Pause recording**. Optional encryption is on the roadmap.
+### Encryption
+
+History is plain JSON by default. If you would rather not keep it readable on disk, turn on
+**Settings → Privacy → Encrypt history** and choose a password:
+
+- Text, file paths and every stored image are encrypted with AES-256-GCM
+- The key is derived with scrypt from your password; only a random salt and a small canary value live in `security.json`
+- On start the panel asks for the password before anything is loaded, and the clipboard watcher does not run until you unlock
+- **There is no recovery.** Forgetting the password means the history is gone; that is what encryption costs
+- Turn it off again (with the password) and everything is decrypted back to plain files
+
+You do not need encryption to be safe day to day: **Ignore keywords** and **Pause recording** already keep secrets out of the history in the first place. Encryption protects the case where someone else gets hold of the files.
 
 ## Known limitations
 
@@ -145,6 +157,7 @@ electron/          main process, plain CommonJS (no build step)
   main.cjs           windows, tray, global shortcut, IPC
   watcher.cjs        clipboard polling and content detection
   store.cjs          history and settings persistence
+  vault.cjs          optional AES-256-GCM encryption
   paste.cjs          clipboard writes and keystroke simulation
   preload.cjs        the API exposed to the renderer
 src/               renderer, React + TypeScript
@@ -165,6 +178,8 @@ npm run dist       # build an installer
 
 Windows users can also double-click `dev.bat` at the project root.
 
+There is no test framework. `npx electron scripts/probe-vault.cjs` exercises the encryption path end to end — encrypt, reopen locked, wrong password, unlock, decrypt — and prints PASS/FAIL per assertion. `npm run preview` renders the UI against mock data without touching the clipboard.
+
 A few things worth knowing before touching the code:
 
 - Since Electron 45, `clipboard` is the async W3C-style API (`read()` / `write(ClipboardItem[])`); the old `availableFormats` / `readBuffer` are gone
@@ -176,7 +191,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) before sending a patch.
 
 ## Roadmap
 
-- [ ] Encrypted storage (optional password)
+- [x] Encrypted storage (optional password)
 - [ ] OCR for screenshots, so pictures become searchable
 - [ ] Source-app detection and per-app ignore rules
 - [ ] Tags and groups

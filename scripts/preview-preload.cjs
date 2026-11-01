@@ -30,8 +30,13 @@ function text(id, body, minutes, extra = {}) {
   }
 }
 
+const FORCE_LOCK = process.env.CLIPNEST_PREVIEW_LOCKED === '1'
+const FORCE_ENC = process.env.CLIPNEST_PREVIEW_ENCRYPTED === '1'
+
 let state = {
   view: 'palette',
+  locked: FORCE_LOCK,
+  encrypted: FORCE_ENC,
   hotkeyOk: true,
   version: '0.1.0',
   platform: 'win32',
@@ -169,6 +174,10 @@ const api = {
     return { settings: state.settings, hotkeyOk: true }
   },
   setModal: async () => true,
+  unlockVault: async (pw) => (pw === "pw" ? { ok: true, count: 3 } : { ok: false, message: "密码不对" }),
+  lockVault: async () => { state.locked = true; state.items = []; push(); return { ok: true } },
+  enableEncryption: async () => { state.encrypted = true; push(); return { ok: true } },
+  disableEncryption: async () => ({ ok: true }),
   openImage: async () => true,
   openDataDir: async () => '',
   appInfo: async () => ({ version: '0.1.0', dataDir: state.dataDir, platform: 'win32', electron: '45' }),
