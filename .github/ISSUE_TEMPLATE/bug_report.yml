@@ -1,0 +1,64 @@
+name: Bug report
+description: Something does not work as expected
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please check the FAQ in the README first — a few common problems are answered there.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you do, and what happened instead?
+      placeholder: I ticked three entries and clicked Merge copy, but only one ended up in the clipboard.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Copy some text in Notepad
+        2. Copy another line
+        3. Open the panel with Ctrl+Shift+V
+        4. ...
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: ClipNest version
+      description: Shown at the top of the settings screen, e.g. 0.3.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS
+        - Linux
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or logs
+      description: Drag images in here. If the window failed to start, paste the terminal output.
+    validations:
+      required: false

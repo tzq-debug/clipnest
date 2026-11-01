@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or usage help
+    url: https://github.com/tzq-debug/clipnest#faq
+    about: Check the FAQ first — window not appearing, images not pasting, shortcut conflicts and more are covered there.
+  - name: Security issue
+    url: https://github.com/tzq-debug/clipnest/security/advisories/new
+    about: Please report vulnerabilities privately, not in a public issue.

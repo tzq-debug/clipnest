@@ -1,58 +1,54 @@
 # ClipNest
 
-一个贴在屏幕边上的剪贴板历史工具。它记录你复制过的文字、图片和文件，需要的时候把几条一起勾出来，一次粘进去。
+**A clipboard manager that lives on the edge of your screen — and lets you paste several things at once.**
 
-> 大部分剪贴板工具解决的是「找回来」；ClipNest 多解决一步「凑起来」。
+[English](README.md) · [简体中文](README.zh-CN.md)
 
-![ClipNest 面板](docs/screenshot.png)
+![platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
+![license](https://img.shields.io/badge/license-MIT-blue)
+![release](https://img.shields.io/github/v/release/tzq-debug/clipnest?color=4c42a8)
+![stars](https://img.shields.io/github/stars/tzq-debug/clipnest?style=social)
 
-<details>
-<summary>多选模式长什么样</summary>
-
-![多选模式](docs/screenshot-select.png)
-
-</details>
+![ClipNest panel](docs/screenshot.png)
 
 ---
 
-## 它和别的剪贴板工具差在哪
+## Why
 
-普通剪贴板工具：找到一条 → 复制 → 粘贴 → 回到工具 → 找到下一条 → 复制 → 粘贴。
+Most clipboard managers stop at "get it back". ClipNest goes one step further: **gather several entries and paste them together.**
 
-ClipNest：勾选三条 → 合并复制 → 回到目标窗口按一次 `Ctrl+V`。
+> Typical clipboard manager: find entry → copy → paste → back to the tool → find the next one → copy → paste.
+>
+> ClipNest: tick three entries → **Merge copy** → back in your app, press `Ctrl+V` once.
 
-合并出来的内容按你在列表里的顺序拼接，可以用换行、空行、空格或直接相连。
+The merged text is joined in the order you see on screen, with a separator you choose.
 
-## 功能
+## Features
 
-- **贴边小条**：常驻屏幕右边缘，鼠标移上去自动展开，移开自动收起，不占任务栏
-- **全局快捷键**：默认 `Ctrl+Shift+V`，可改成任意组合
-- **多选批量粘贴**：点筛选行右侧的「多选」，之后单击条目就是勾选；可以「全选」或 `Ctrl+A`，再合并复制或依次粘贴
-- **一键清理**：标题栏的垃圾桶按钮，点两下清空（防误删），收藏的条目会保留
-- **富内容支持**：纯文本、HTML 富文本、图片，以及从资源管理器复制的文件
-- **截图自动当图片**：截图工具往往把 `.png` 文件塞进剪贴板，ClipNest 会认出它是图片、生成缩略图并归到「图片」分类
-- **点开看大图**：点图片缩略图弹出预览，可以用系统看图程序打开，或直接复制
-- **搜索与筛选**：实时搜索内容，按文本 / 图片 / 文件 / 收藏筛选
-- **固定收藏**：重要的条目钉在顶部，不会被自动清理
-- **隐私控制**：忽略关键词、单条字数上限、暂停记录
-- **纯本地**：不联网、不上传、无账号
+- **Edge dock** — a slim strip on the right edge of the screen. Hover to expand, move away to collapse. No taskbar button.
+- **Global hotkey** — `Ctrl+Shift+V` by default, rebindable.
+- **Batch paste** — tick any number of entries, then merge them into one clipboard payload or replay them one by one.
+- **Everything you copy** — plain text, HTML rich text, images, and files from your file manager.
+- **Screenshots become pictures** — screenshot tools usually put a `.png` *file* on the clipboard; ClipNest recognises it, generates a thumbnail and files it under images.
+- **Click to enlarge** — thumbnails open a preview; copy from there or hand it to your system image viewer.
+- **Search and filters** — live search, filter by text / image / file / pinned.
+- **Pin favourites** — keep important entries on top, out of reach of auto-cleanup.
+- **One-click clean** — the trash button clears history but keeps pinned entries.
+- **Private by design** — no account, no network, no telemetry.
 
-## 安装
+## Install
 
-### 直接下载
-
-到 [Releases](https://github.com/tzq-debug/clipnest/releases) 下载对应系统的安装包：
-
-| 系统 | 文件 |
+| Platform | Download |
 | --- | --- |
-| Windows | `ClipNest-x.y.z-x64.exe` |
-| macOS | `ClipNest-x.y.z.dmg` |
-| Linux | `ClipNest-x.y.z.AppImage` |
+| Windows | [ClipNest-x.y.z-x64.exe](https://github.com/tzq-debug/clipnest/releases/latest) |
+| macOS | build from source (no `.dmg` yet) |
+| Linux | build from source (no `.AppImage` yet) |
 
+The Windows build is not code-signed, so SmartScreen will warn you: **More info → Run anyway**.
 
-### 从源码运行
+### From source
 
-需要 Node.js 20 以上。
+Requires Node.js 20+.
 
 ```bash
 git clone https://github.com/tzq-debug/clipnest.git
@@ -61,156 +57,138 @@ npm install
 npm run dev
 ```
 
-打包安装包：
+Package an installer for your platform:
 
 ```bash
-npm run dist        # 当前平台
-npm run dist:win    # 指定 Windows
+npm run dist
 ```
 
-## 使用
+## Usage
 
-1. 启动后，屏幕右边缘会出现一条竖着的小条，上面显示已记录的数量。
-2. 正常复制东西，它会自己记录。
-3. 鼠标移到小条上，面板展开；或者随时按 `Ctrl+Shift+V` 唤起。
-4. 单击某条 = 复制这一条；单击左侧圆圈 = 勾选，可以勾多条。
-5. 图片条目的缩略图可以点开看大图，预览里能直接复制，或交给系统看图程序打开。
-6. 勾选后底部会出现操作栏：**合并复制** 或 **依次粘贴**。
+1. Launch it. A thin purple strip appears in the middle of the right screen edge.
+2. Copy things as usual — they are recorded automatically.
+3. Hover the strip to expand, or press `Ctrl+Shift+V` from anywhere.
+4. Click an entry to copy it; click the circle on the left to tick it.
+5. Tick several, then **Merge copy** — or **Replay one by one** — in the bottom bar.
 
-### 两种批量方式怎么选
+### Keyboard
 
-| | 合并复制 | 依次粘贴 |
-| --- | --- | --- |
-| 原理 | 把选中内容拼成一段，写进剪贴板 | 逐条写剪贴板并模拟按下 `Ctrl+V` |
-| 你还需要做什么 | 回到目标窗口按一次 `Ctrl+V` | 无需操作，但要把光标先点进目标输入框 |
-| 适合 | 几段文字要一起贴到聊天窗口、文档里 | 填表格、一栏一栏地粘贴 |
-| 限制 | 图片不能参与合并（系统剪贴板只放得下一张图） | 部分程序会拦截模拟按键，或粘贴到错误的焦点 |
-
-依次粘贴依赖系统级的按键模拟：Windows 用 PowerShell `SendKeys`，macOS 用 `osascript`，Linux 需要 `xdotool`。这是实验性功能，第一次用建议先拿记事本试。
-
-## 键盘操作
-
-| 按键 | 作用 |
+| Key | Action |
 | --- | --- |
-| `Ctrl+Shift+V` | 全局唤起 / 收起面板（可在设置里改） |
-| `↑` `↓` | 上下移动选中项 |
-| `空格` | 勾选 / 取消勾选当前项 |
-| `Enter` | 复制当前项（或有勾选时复制全部勾选项） |
-| `Delete` | 删除当前项 |
-| `Ctrl+A` | 全选当前筛选结果 |
-| `Esc` | 退出多选 / 收起面板 |
+| `Ctrl+Shift+V` | Open / close the panel (rebindable) |
+| `Up` `Down` | Move the cursor |
+| `Space` | Tick / untick the current entry |
+| `Enter` | Copy the current entry (or all ticked ones) |
+| `Ctrl+A` | Select everything in the current filter |
+| `Delete` | Delete the current entry |
+| `Esc` | Leave multi-select, close the preview, collapse the panel |
 
-## 数据存在哪
+### Two ways to paste in bulk
 
-全部数据都在本机用户目录里，纯文本 JSON + 图片文件，没有任何网络请求：
+| | Merge copy | Replay one by one |
+| --- | --- | --- |
+| How | Joins the selection into one payload | Writes each entry, then simulates `Ctrl+V` |
+| You then | Press `Ctrl+V` once | Nothing — put the caret in the target field first |
+| Good for | Several paragraphs heading to one place | Filling a form, one field at a time |
+| Limits | Images cannot be merged (the OS clipboard holds one image) | Some apps block synthetic keystrokes |
 
-| 系统 | 路径 |
+Replay relies on OS-level key simulation: PowerShell `SendKeys` on Windows, `osascript` on macOS, `xdotool` on Linux. It is experimental — try it in Notepad first.
+
+## Privacy
+
+Everything is stored locally as plain JSON plus image files. There is no network code in this project at all.
+
+| Platform | Path |
 | --- | --- |
 | Windows | `%APPDATA%\ClipNest` |
 | macOS | `~/Library/Application Support/ClipNest` |
 | Linux | `~/.config/ClipNest` |
 
 ```
-history.json     历史记录（纯文本，可用任意编辑器打开）
-settings.json    设置
-images/          图片与缩略图
+history.json     history, human-readable
+settings.json    settings
+images/          images and thumbnails
 ```
 
-设置里有「打开目录」按钮可以直接跳过去。删除这个文件夹 = 彻底清空。
+Delete that folder to wipe everything; Settings has a button that opens it for you.
 
-**注意**：历史记录默认是明文的。如果你会复制密码、密钥、身份信息，建议在设置里把关键词（如 `password`、`token`）加进「忽略关键词」，或者临时开启「暂停记录」。
+**Note:** history is stored in plain text. If you copy passwords or tokens, add keywords such as `password` or `token` to **Ignore keywords**, or hit **Pause recording**. Optional encryption is on the roadmap.
 
-## 已知限制
+## Known limitations
 
-- 剪贴板靠轮询检测（默认 420ms 一次），连续极快地复制两次可能漏掉一次
-- 从资源管理器复制的文件，回填剪贴板依赖 PowerShell 的 `Set-Clipboard`，非 Windows 平台会退化成路径文本
-- 依次粘贴在 Linux 上需要自行安装 `xdotool`
-- 不支持来源应用识别（「不记录来自密码管理器的内容」这类规则暂未实现）
+- The clipboard is polled every 420 ms; two extremely fast copies in a row can miss one
+- Copying files back relies on PowerShell `Set-Clipboard` on Windows; other platforms fall back to plain path text
+- Replay mode needs `xdotool` on Linux
+- The source application of a copy is not detected yet, so "never record anything from my password manager" rules are not possible
 
-### 启动后窗口没出现 / 立刻退出
+## FAQ
 
-某些受限环境（远程桌面、部分虚拟机、带进程沙箱的终端）会让 Chromium 的 GPU 进程启动失败，日志里出现 `GPU process isn't usable. Goodbye.`。用下面的方式启动可以绕过：
+**I clicked an entry but pasted the previous content.**
+Make sure you are on 0.2.0 or later — 0.1.0 had a bug where any click copied the top entry instead of the one you clicked.
+
+**An image copy pastes nothing into my chat app.**
+Image copies carry both a bitmap and a file, so both kinds of target work. If a specific app still ignores it, please open an issue with the app name.
+
+**The strip does not appear after launch.**
+Usually a second instance is already running — only one can. In restricted environments (some VMs, remote desktops, sandboxed terminals) Chromium's GPU process can fail; start with `ClipNest.exe --no-sandbox`.
+
+**`Ctrl+Shift+V` conflicts with paste-as-plain-text in my browser or editor.**
+That is exactly why the shortcut is rebindable: Settings → Shortcut → press your combination.
+
+**Does it phone home?**
+No. No analytics, no update check, no account.
+
+## Development
+
+```
+electron/          main process, plain CommonJS (no build step)
+  main.cjs           windows, tray, global shortcut, IPC
+  watcher.cjs        clipboard polling and content detection
+  store.cjs          history and settings persistence
+  paste.cjs          clipboard writes and keystroke simulation
+  preload.cjs        the API exposed to the renderer
+src/               renderer, React + TypeScript
+scripts/           dev-only tooling, not shipped
+assets/            runtime icons
+build/             packaging icons
+docs/              documentation screenshots
+```
+
+Electron + React + TypeScript + Vite, with no native modules — `npm install` and you are running.
 
 ```bash
-npx electron . --no-sandbox
+npm run dev        # hot reload for the renderer
+npm run typecheck  # tsc --noEmit
+npm run preview    # render the UI with mock data and screenshot it
+npm run dist       # build an installer
 ```
 
-正常桌面环境不需要加这个参数。
+Windows users can also double-click `dev.bat` at the project root.
 
-## 项目结构
+A few things worth knowing before touching the code:
 
-```
-electron/            主进程（纯 CommonJS，不需要编译）
-  main.cjs             窗口形态、托盘、全局快捷键、IPC
-  watcher.cjs          剪贴板轮询与内容识别
-  store.cjs            历史与设置持久化
-  paste.cjs            剪贴板写入与按键模拟
-  preload.cjs          contextBridge 暴露给渲染层的 API
-src/                 渲染层（React + TypeScript）
-  App.tsx              按窗口形态切换贴边条 / 面板
-  Panel.tsx            列表、搜索、筛选、多选、清理
-  ItemCard.tsx         单条记录
-  PreviewOverlay.tsx   图片大图预览
-  Settings.tsx         设置页
-  DockStrip.tsx        屏幕边缘的常驻小条
-  styles.css           全部样式，含深色模式变量
-scripts/             开发期脚本，不进安装包
-  dev.mjs              vite + electron 联合启动
-  preview.cjs          用假数据渲染界面并截图，不碰系统剪贴板
-  preview-preload.cjs  预览用的假 API
-  probe-clipboard.cjs  打印剪贴板里所有 MIME 类型，排查平台差异
-  make-icons.py        重新生成图标（需要 pip install pillow）
-assets/              运行时资源：应用图标、托盘图标
-build/               打包用图标（icon.ico / icon.png）
-docs/                文档截图
-```
+- Since Electron 45, `clipboard` is the async W3C-style API (`read()` / `write(ClipboardItem[])`); the old `availableFormats` / `readBuffer` are gone
+- There is no clipboard change event, so the watcher polls every 420 ms
+- A `transparent: true` window may need `--disable-gpu` in some VMs and remote desktops
+- Replay mode needs `xdotool` on Linux
 
-技术栈：Electron + React + TypeScript + Vite。没有任何原生模块，`npm install` 之后直接能跑。
+See [CONTRIBUTING.md](CONTRIBUTING.md) before sending a patch.
 
-```bash
-npm run dev       # 开发模式，改渲染层代码会热更新
-npm run preview   # 用 mock 数据渲染面板，输出 .preview-list.png
-npm run dist      # 打包当前平台
-```
+## Roadmap
 
-需要给 Electron 传额外参数时，用 `CLIPNEST_ELECTRON_ARGS`：
+- [ ] Encrypted storage (optional password)
+- [ ] OCR for screenshots, so pictures become searchable
+- [ ] Source-app detection and per-app ignore rules
+- [ ] Tags and groups
+- [ ] Self-hosted sync between devices
+- [ ] macOS and Linux release builds
 
-```bash
-CLIPNEST_ELECTRON_ARGS="--no-sandbox --no-proxy-server" npm run dev
-```
+## Contributing
 
-如果 `npm run dev` 起来之后看不到窗口，多半是开发服务器被系统代理拦了——加 `--no-proxy-server` 即可（打包后的应用不联网，不受影响）。
+Issues and pull requests are welcome. Bug reports are easiest to act on when they include your OS, the ClipNest version, and what you expected to happen. See [CONTRIBUTING.md](CONTRIBUTING.md) for the details.
 
-Windows 上也可以直接双击项目根目录的 `dev.bat`，它会带着参数启动并保持窗口。
+If ClipNest saves you a few clicks a day, a star helps other people find it.
 
-几个实现上的注意点，改代码前值得知道：
+## License
 
-- Electron 45 起 `clipboard` 换成了 W3C 风格的异步 API（`read()` / `write(ClipboardItem[])`），旧的 `availableFormats`、`readBuffer` 已经不存在了
-- 剪贴板没有 `changed` 事件，只能轮询；间隔在 `watcher.cjs` 里，默认 420ms
-- 透明度窗口在某些虚拟机和远程桌面里需要 `--disable-gpu` 才能正常显示
-- Linux 上的「依次粘贴」依赖 `xdotool`
-
-## 路线图
-
-- [ ] 条目内搜索高亮与正则
-- [ ] 图片 OCR，让截图也能被文字搜到
-- [ ] 加密存储（可选口令解锁）
-- [ ] 剪贴板内容来源应用识别与规则
-- [ ] 分组与标签
-- [ ] 多设备同步（自建，非云）
-
-## 版本记录
-
-每个版本的改动见 [CHANGELOG.md](CHANGELOG.md)。
-
-## 许可
-
-[MIT](LICENSE)
-
----
-
-## English
-
-ClipNest is a clipboard history manager that lives in a thin strip on the edge of your screen. It records text, images and files you copy, and lets you tick several entries and paste them all at once — either merged into one block, or replayed one by one.
-
-Cross-platform (Windows / macOS / Linux), built with Electron + React + TypeScript, no native modules, no network access, MIT licensed.
+[MIT](LICENSE) · [Changelog](CHANGELOG.md) · [Security policy](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)

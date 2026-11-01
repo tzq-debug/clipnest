@@ -1,0 +1,45 @@
+name: Feature request
+description: Suggest an idea or an improvement
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the problem first, then the solution. That makes it much easier to judge whether the feature belongs in ClipNest.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve
+      placeholder: I paste the same five fields into a form every morning and still have to copy them one at a time.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like ClipNest to do
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you have considered
+      description: Other tools, workarounds, or a different design for the same idea.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Which part of the app is this about
+      options:
+        - The edge dock / panel
+        - Copying and pasting
+        - Recording (what gets captured)
+        - Settings and privacy
+        - Packaging / installation
+        - Something else
+    validations:
+      required: false
