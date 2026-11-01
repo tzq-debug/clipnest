@@ -153,6 +153,14 @@ npm run preview   # 用 mock 数据渲染面板，输出 .preview-list.png
 npm run dist      # 打包当前平台
 ```
 
+需要给 Electron 传额外参数时，用 `CLIPNEST_ELECTRON_ARGS`：
+
+```bash
+CLIPNEST_ELECTRON_ARGS="--no-sandbox --no-proxy-server" npm run dev
+```
+
+如果 `npm run dev` 起来之后看不到窗口，多半是开发服务器被系统代理拦了——加 `--no-proxy-server` 即可（打包后的应用不联网，不受影响）。
+
 几个实现上的注意点，改代码前值得知道：
 
 - Electron 45 起 `clipboard` 换成了 W3C 风格的异步 API（`read()` / `write(ClipboardItem[])`），旧的 `availableFormats`、`readBuffer` 已经不存在了

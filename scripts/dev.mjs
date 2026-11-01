@@ -10,9 +10,19 @@ await server.listen()
 server.printUrls()
 
 const url = `http://localhost:${server.config.server.port ?? 5173}`
-const child = spawn(electronPath, ['.'], {
+
+// Extra flags for the Electron binary, e.g. CLIPNEST_ELECTRON_ARGS="--no-sandbox"
+// when developing inside a restricted environment.
+const extraArgs = (process.env.CLIPNEST_ELECTRON_ARGS || '').split(' ').filter(Boolean)
+
+const childEnv = { ...process.env, VITE_DEV_SERVER_URL: url, NODE_ENV: 'development' }
+// Some IDEs and embedded terminals export this; inheriting it makes the Electron
+// binary behave like plain Node, so `require('electron').app` comes back undefined.
+delete childEnv.ELECTRON_RUN_AS_NODE
+
+const child = spawn(electronPath, ['.', ...extraArgs], {
   stdio: 'inherit',
-  env: { ...process.env, VITE_DEV_SERVER_URL: url, NODE_ENV: 'development' }
+  env: childEnv
 })
 
 const shutdown = async (code = 0) => {

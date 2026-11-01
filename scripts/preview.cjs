@@ -45,6 +45,21 @@ app.whenReady().then(async () => {
     if (typeof msg === 'string' && msg.includes('[mock-copy]')) console.log('RENDERER>', msg)
   })
 
+  if (scenario === 'button') {
+    const res = await win.webContents.executeJavaScript(`
+      const card = document.querySelectorAll('.card')[5]
+      const btn = card.querySelectorAll('.card-actions button')[1]
+      const rect = btn.getBoundingClientRect()
+      const opts = { bubbles: true, clientX: rect.x + 2, clientY: rect.y + 2 }
+      btn.dispatchEvent(new MouseEvent('mousedown', opts))
+      btn.dispatchEvent(new MouseEvent('mouseup', opts))
+      btn.click()
+      card.querySelector('.card-text, .card-filename')?.textContent.slice(0, 30) || 'clicked'
+    `)
+    console.log('card says:', res)
+    await wait(500)
+  }
+
   if (scenario === 'preview') {
     await win.webContents.executeJavaScript(`
       const im = document.querySelectorAll('.card-image')[0]
