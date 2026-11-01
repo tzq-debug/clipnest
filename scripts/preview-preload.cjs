@@ -54,7 +54,7 @@ let state = {
   },
   items: [
     text('1', '把几段文字分开复制，再用 ClipNest 一次性合并粘贴，这就是它和普通剪贴板工具的区别。', 0.2),
-    text('2', 'https://github.com/your-name/clipnest', 3),
+    text('2', 'https://github.com/tzq-debug/clipnest', 3),
     {
       id: '3',
       type: 'image',
