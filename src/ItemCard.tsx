@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import type { ClipItem, ImageAsset } from './types'
-import { CopyIcon, FileIcon, ImageIcon, PinIcon, TextIcon, TrashIcon } from './icons'
+import { CopyIcon, FileIcon, ImageIcon, LockIcon, PinIcon, TextIcon, TrashIcon } from './icons'
 import { fileName, itemSizeLabel, relativeTime, typeLabel } from './utils'
 
 interface Props {
@@ -58,7 +58,15 @@ function ItemCardBase({
       </button>
 
       <div className="card-body">
-        {item.type === 'text' && <p className="card-text">{item.preview}</p>}
+        {item.type === 'text' && !item.sensitive && <p className="card-text">{item.preview}</p>}
+
+        {item.sensitive && (
+          <div className="card-secret">
+            <LockIcon size={13} />
+            <span>{item.sensitiveLabel || '敏感内容'}</span>
+            <em>{item.chars} 字符</em>
+          </div>
+        )}
 
         {picture && (
           <div
@@ -95,9 +103,9 @@ function ItemCardBase({
         )}
 
         <div className="card-meta">
-          <span className="badge">
-            {icon}
-            {picture ? '图片' : typeLabel(item.type)}
+          <span className={`badge${item.sensitive ? ' secret' : ''}`}>
+            {item.sensitive ? <LockIcon size={13} /> : icon}
+            {item.sensitive ? '已加密' : picture ? '图片' : typeLabel(item.type)}
           </span>
           <span className="dot" />
           <span>{itemSizeLabel(item)}</span>

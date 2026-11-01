@@ -146,7 +146,9 @@ function publicItem(item) {
     id: item.id,
     type: item.type,
     isImage: Boolean(item.isImage),
-    preview: item.type === 'text' ? item.text.slice(0, 2400) : '',
+    preview: item.type === 'text' && !item.sealed ? item.text.slice(0, 2400) : '',
+    sensitive: item.sensitive || null,
+    sensitiveLabel: item.sensitiveLabel || null,
     chars: item.chars || 0,
     files: item.files || null,
     image: item.image || null,
@@ -547,7 +549,11 @@ function registerIpc() {
     if (vaultLocked) return { ok: false, message: '请先解锁' }
     const ids = (payload && payload.ids) || []
     const mode = (payload && payload.mode) || 'merged'
-    const items = ids.map((id) => store.get(id)).filter(Boolean)
+    const items = ids
+      .map((id) => store.get(id))
+      .filter(Boolean)
+      // sealed entries only carry ciphertext; decrypt on the way out
+      .map((it) => (it.sealed ? { ...it, text: store.revealText(it) } : it))
     if (!items.length) return { ok: false, message: '没有可复制的内容' }
 
     if (mode === 'sequential') {

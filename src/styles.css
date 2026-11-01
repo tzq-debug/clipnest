@@ -501,6 +501,28 @@ button {
   border-color: var(--accent-400);
 }
 
+.card-secret {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 12px;
+}
+
+.card-secret em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--faint);
+  margin-left: auto;
+}
+
+.badge.secret {
+  color: var(--accent-strong);
+}
+
 .card-filename {
   margin: 0;
   font-size: 12px;

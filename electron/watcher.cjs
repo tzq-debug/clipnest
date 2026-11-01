@@ -5,6 +5,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 const { Store } = require('./store.cjs')
+const { detectSensitive } = require('./sensitive.cjs')
 
 /**
  * Poll-based clipboard watcher.
@@ -124,6 +125,27 @@ function createWatcher({ store, onChange, interval = 420 }) {
         }
         if (hash === baseline) return null
         baseline = hash
+
+        // A key, a token or an ID number gets sealed and masked instead of
+        // sitting in the history as readable text.
+        const sensitive = settings.sensitiveEnabled === false ? null : detectSensitive(text)
+        if (sensitive) {
+          if ((settings.sensitivePolicy || 'seal') === 'skip') return null
+          const sealed = store.seal(text)
+          if (!sealed) return null
+          return {
+            id: Store.newId(),
+            type: 'text',
+            text: '',
+            sealed,
+            sensitive: sensitive.kind,
+            sensitiveLabel: sensitive.label,
+            chars: text.length,
+            hash,
+            createdAt: Date.now(),
+            pinned: false
+          }
+        }
 
         const html = types.includes('text/html') ? await readTextType(item, 'text/html') : ''
         const rtf = types.includes('text/rtf') ? await readTextType(item, 'text/rtf') : ''

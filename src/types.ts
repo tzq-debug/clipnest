@@ -1,5 +1,7 @@
 export type ItemType = 'text' | 'image' | 'files'
 
+export type SensitiveKind = 'private-key' | 'api-key' | 'jwt' | 'id-card' | 'bank-card' | 'credential'
+
 export interface ClipItem {
   id: string
   type: ItemType
@@ -16,6 +18,9 @@ export interface ClipItem {
   bytes: number
   createdAt: number
   pinned: boolean
+  /** Set when the text was sealed with the OS key and masked in the list. */
+  sensitive: SensitiveKind | null
+  sensitiveLabel: string | null
 }
 
 export type Filter = 'all' | 'text' | 'image' | 'files' | 'pinned'
@@ -36,6 +41,8 @@ export interface Settings {
   showDock: boolean
   launchAtLogin: boolean
   theme: 'system' | 'light' | 'dark'
+  sensitiveEnabled: boolean
+  sensitivePolicy: 'seal' | 'skip'
   onboarded: boolean
 }
 

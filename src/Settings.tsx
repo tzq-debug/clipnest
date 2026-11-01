@@ -228,6 +228,27 @@ export default function Settings({
         </Group>
 
         <Group title="隐私">
+          <Row title="识别敏感内容" hint="API 密钥、私钥、JWT、身份证、银行卡、账号口令">
+            <Switch
+              label="识别敏感内容"
+              checked={settings.sensitiveEnabled}
+              onChange={(v) => onUpdate({ sensitiveEnabled: v })}
+            />
+          </Row>
+
+          {settings.sensitiveEnabled && (
+            <Row title="处理方式" hint="「加密」用系统密钥单独加密，列表里打码，不需要设置口令">
+              <select
+                className="select"
+                value={settings.sensitivePolicy}
+                onChange={(e) => onUpdate({ sensitivePolicy: e.target.value as SettingsType['sensitivePolicy'] })}
+              >
+                <option value="seal">加密保存并打码</option>
+                <option value="skip">直接不记录</option>
+              </select>
+            </Row>
+          )}
+
           <Row title="加密历史" hint="开启后启动要输密码解锁，文字和图片一起加密">
             <Switch
               label="加密历史"

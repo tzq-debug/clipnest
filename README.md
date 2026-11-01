@@ -35,6 +35,7 @@ The merged text is joined in the order you see on screen, with a separator you c
 - **Pin favourites** — keep important entries on top, out of reach of auto-cleanup.
 - **One-click clean** — the trash button clears history but keeps pinned entries.
 - **Optional encryption** — a password encrypts the history and every stored image with AES-256-GCM; the app asks for it on each start.
+- **Secrets are treated differently** — API keys, private keys, JWTs, ID and card numbers are recognised as you copy them, sealed with the OS key and masked in the list. No master password needed.
 - **Private by design** — no account, no network, no telemetry.
 
 ## Install
@@ -126,6 +127,24 @@ History is plain JSON by default. If you would rather not keep it readable on di
 
 You do not need encryption to be safe day to day: **Ignore keywords** and **Pause recording** already keep secrets out of the history in the first place. Encryption protects the case where someone else gets hold of the files.
 
+### Sensitive entries
+
+Independently of the vault, ClipNest watches for things that look like credentials and treats them differently:
+
+| Recognised | Example |
+| --- | --- |
+| API keys | `sk-…`, `ghp_…`, `AKIA…`, `xoxb-…`, `sk_live_…` |
+| Private keys | anything between `-----BEGIN … PRIVATE KEY-----` |
+| JWT | three dot-separated base64url segments |
+| ID / bank cards | 18-digit Chinese ID numbers, card numbers that pass the Luhn check |
+| Credentials | `password: …`, `API_KEY=…`, `secret=…` |
+
+By default they are **sealed and masked**: the text is encrypted with the OS key (DPAPI on Windows, Keychain on macOS, libsecret on Linux) — only your user account can decrypt it — and the list shows just the kind and the length. Copying works as usual; decryption happens on the way out. Nothing readable reaches the disk, and you are not asked for a password.
+
+If you would rather not keep them at all, set **Settings → Privacy → Handling** to `skip`.
+
+The detection is pattern-based, not a guarantee. A key pasted inside a long paragraph of prose may slip through; the vault and the ignore list are the belts to this pair of braces.
+
 ## Known limitations
 
 - The clipboard is polled every 420 ms; two extremely fast copies in a row can miss one
@@ -158,6 +177,7 @@ electron/          main process, plain CommonJS (no build step)
   watcher.cjs        clipboard polling and content detection
   store.cjs          history and settings persistence
   vault.cjs          optional AES-256-GCM encryption
+  sensitive.cjs      credential detection rules
   paste.cjs          clipboard writes and keystroke simulation
   preload.cjs        the API exposed to the renderer
 src/               renderer, React + TypeScript
@@ -192,6 +212,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) before sending a patch.
 ## Roadmap
 
 - [x] Encrypted storage (optional password)
+- [x] Sensitive-content detection with per-item sealing
 - [ ] OCR for screenshots, so pictures become searchable
 - [ ] Source-app detection and per-app ignore rules
 - [ ] Tags and groups

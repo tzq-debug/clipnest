@@ -16,6 +16,8 @@ function text(id, body, minutes, extra = {}) {
     type: 'text',
     isImage: false,
     big: null,
+    sensitive: null,
+    sensitiveLabel: null,
     preview: body,
     chars: body.length,
     files: null,
@@ -55,6 +57,8 @@ let state = {
     showDock: true,
     launchAtLogin: false,
     theme: 'light',
+    sensitiveEnabled: true,
+    sensitivePolicy: 'seal',
     onboarded: true
   },
   items: [
@@ -114,6 +118,7 @@ let state = {
       40
     ),
     text('6', '会议纪要：周四下午三点，讨论 v0.2 的加密存储方案', 95, { pinned: true }),
+    text('10', '', 6, { sensitive: 'api-key', sensitiveLabel: 'API 密钥', chars: 51 }),
     text('7', 'npm run dist:win', 180),
     text('8', '订单号 20261031-8842 · 收货人 张先生 · 13800000000', 300)
   ]

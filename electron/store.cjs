@@ -20,6 +20,8 @@ const DEFAULT_SETTINGS = {
   showDock: true,
   launchAtLogin: false,
   theme: 'system',
+  sensitiveEnabled: true,
+  sensitivePolicy: 'seal',
   onboarded: false
 }
 
@@ -274,6 +276,38 @@ class Store {
     } catch (err) {
       this.dirty = true
       console.error('[clipnest] failed to persist history', err)
+    }
+  }
+
+  /* ---------- sensitive content ---------- */
+
+  /** True when the OS can protect a small blob for this user (DPAPI / Keychain). */
+  canSeal() {
+    try {
+      return require('electron').safeStorage.isEncryptionAvailable()
+    } catch {
+      return false
+    }
+  }
+
+  /** Encrypt one item's text with the OS key, without asking for a password. */
+  seal(plain) {
+    if (!this.canSeal()) return null
+    try {
+      return require('electron').safeStorage.encryptString(plain).toString('base64')
+    } catch {
+      return null
+    }
+  }
+
+  /** Plain text of an item, decrypting it when it was sealed. */
+  revealText(item) {
+    if (!item) return ''
+    if (!item.sealed) return item.text || ''
+    try {
+      return require('electron').safeStorage.decryptString(Buffer.from(item.sealed, 'base64'))
+    } catch {
+      return ''
     }
   }
 
