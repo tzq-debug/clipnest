@@ -25,7 +25,7 @@ export default function Panel({ state }: { state: AppState }) {
   const [images, setImages] = useState<Record<string, ImageAsset>>({})
   const [previewId, setPreviewId] = useState<string | null>(null)
   const [selectMode, setSelectMode] = useState(false)
-  const [clearing, setClearing] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
@@ -116,18 +116,29 @@ export default function Panel({ state }: { state: AppState }) {
     setSelectMode(false)
   }, [orderedSelection, filtered, active])
 
-  const handleClear = useCallback(async () => {
-    if (!clearing) {
-      setClearing(true)
-      setTimeout(() => setClearing(false), 3000)
+  // Clearing used to be "click twice within three seconds", which silently
+  // expired: a slower second click just re-armed the button and nothing
+  // happened. The confirm now stays on screen until you pick one of the two
+  // buttons, so the state can never vanish between clicks.
+  const clearable = items.filter((it) => !it.pinned).length
+
+  const askClear = useCallback(() => {
+    if (!clearable) {
+      setToast('没有可清理的记录')
       return
     }
-    setClearing(false)
+    setSelectMode(false)
+    setSelected([])
+    setConfirmClear(true)
+  }, [clearable])
+
+  const runClear = useCallback(async () => {
+    setConfirmClear(false)
     const res = await window.clipnest.clear(true)
     setSelected([])
     setSelectMode(false)
     setToast(res.cleared ? `已清空 ${res.cleared} 条，收藏已保留` : '没有可清理的记录')
-  }, [clearing])
+  }, [])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -159,6 +170,9 @@ export default function Panel({ state }: { state: AppState }) {
         e.preventDefault()
         setSelectMode(true)
         setSelected(filtered.map((it) => it.id))
+      } else if (e.key === 'Escape' && confirmClear) {
+        e.preventDefault()
+        setConfirmClear(false)
       } else if (e.key === 'Escape' && selectMode) {
         e.preventDefault()
         exitSelect()
@@ -166,7 +180,7 @@ export default function Panel({ state }: { state: AppState }) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [filtered, active, orderedSelection.length, runCopy, toggleSelect, screen, previewId, selectMode, exitSelect])
+  }, [filtered, active, orderedSelection.length, runCopy, toggleSelect, screen, previewId, selectMode, exitSelect, confirmClear])
 
   useEffect(() => {
     const node = listRef.current?.querySelector<HTMLElement>(`[data-idx="${active}"]`)
@@ -211,15 +225,23 @@ export default function Panel({ state }: { state: AppState }) {
         <div className="head-actions">
           {items.length > 0 && (
             <button
-              className={`icon-btn${clearing ? ' armed' : ''}`}
-              title={clearing ? '再点一次，确认清空（收藏会保留）' : '清理历史（保留收藏）'}
+              className={`icon-btn${confirmClear ? ' armed' : ''}`}
+              title="清理历史（收藏会保留）"
               aria-label="清理历史"
-              onClick={handleClear}
+              onClick={askClear}
             >
               <TrashIcon size={15} />
             </button>
           )}
-          <button className="icon-btn" title="设置" aria-label="设置" onClick={() => setScreen(screen === 'settings' ? 'list' : 'settings')}>
+          <button
+            className="icon-btn"
+            title="设置"
+            aria-label="设置"
+            onClick={() => {
+              setConfirmClear(false)
+              setScreen(screen === 'settings' ? 'list' : 'settings')
+            }}
+          >
             <SettingsIcon size={15} />
           </button>
           <button className="icon-btn" title="收起 (Esc)" aria-label="收起" onClick={() => window.clipnest.dismiss()}>
@@ -325,7 +347,23 @@ export default function Panel({ state }: { state: AppState }) {
 
           {toast && <div className="toast">{toast}</div>}
 
-          {selectMode ? (
+          {confirmClear ? (
+            <div className="selbar confirm">
+              <div className="selbar-count">
+                <TrashIcon size={14} />
+                清空 <strong>{clearable}</strong> 条记录
+                <span className="confirm-note">收藏会保留</span>
+              </div>
+              <div className="selbar-actions">
+                <button className="ghost-btn" onClick={() => setConfirmClear(false)}>
+                  取消
+                </button>
+                <button className="danger-btn" onClick={runClear}>
+                  确认清空
+                </button>
+              </div>
+            </div>
+          ) : selectMode ? (
             <div className="selbar">
               <div className="selbar-count">
                 <LayersIcon size={14} />

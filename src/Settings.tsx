@@ -361,20 +361,26 @@ export default function Settings({
             </button>
           </Row>
           <Row title="清空历史" hint="收藏的记录会被保留">
-            <button
-              className={`chip-btn danger${confirmClear ? ' confirm' : ''}`}
-              onClick={() => {
-                if (!confirmClear) {
-                  setConfirmClear(true)
-                  setTimeout(() => setConfirmClear(false), 3000)
-                  return
-                }
-                setConfirmClear(false)
-                onClear(true)
-              }}
-            >
-              <TrashIcon size={13} /> {confirmClear ? '确认清空？' : '清空'}
-            </button>
+            {confirmClear ? (
+              <div className="row-actions">
+                <button className="chip-btn" onClick={() => setConfirmClear(false)}>
+                  取消
+                </button>
+                <button
+                  className="chip-btn danger confirm"
+                  onClick={() => {
+                    setConfirmClear(false)
+                    onClear(true)
+                  }}
+                >
+                  <TrashIcon size={13} /> 确认清空
+                </button>
+              </div>
+            ) : (
+              <button className="chip-btn danger" onClick={() => setConfirmClear(true)}>
+                <TrashIcon size={13} /> 清空
+              </button>
+            )}
           </Row>
         </Group>
 

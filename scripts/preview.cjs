@@ -64,15 +64,26 @@ app.whenReady().then(async () => {
     await wait(400)
   }
 
+  if (scenario === 'clearsettings') {
+    await win.webContents.executeJavaScript(`document.querySelector('[title="设置"]').click()`)
+    await wait(350)
+    await win.webContents.executeJavaScript(`
+      const rows = document.querySelectorAll('.row')
+      for (const r of rows) { if (r.textContent.includes('清空历史')) r.scrollIntoView({ block: 'center' }) }
+      const btn = [...document.querySelectorAll('.chip-btn.danger')].find((b) => b.textContent.trim() === '清空')
+      btn.click()
+      'armed'
+    `)
+    await wait(400)
+  }
+
   if (scenario === 'clear') {
     await win.webContents.executeJavaScript(`document.querySelector('.icon-btn[aria-label="清理历史"]').click()`)
-    await wait(250)
-    const armed = await win.webContents.executeJavaScript(
-      `document.querySelector('.icon-btn.armed') ? 'armed' : 'not armed'`
+    await wait(400)
+    const bar = await win.webContents.executeJavaScript(
+      `document.querySelector('.selbar.confirm')?.innerText.replace(/\\s+/g, ' ') || 'no bar'`
     )
-    await win.webContents.executeJavaScript(`document.querySelector('.icon-btn[aria-label="清理历史"]').click()`)
-    await wait(500)
-    console.log('first click:', armed)
+    console.log('confirm bar:', bar)
   }
 
   if (scenario === 'select') {

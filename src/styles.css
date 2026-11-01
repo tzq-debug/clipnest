@@ -797,6 +797,38 @@ button {
 
 /* ---------------------------------------------------------------- toast */
 
+/* The clear confirmation replaces the footer, so it cannot be missed or time
+   out while the pointer is elsewhere. */
+.selbar.confirm {
+  border-top-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.selbar.confirm .selbar-count {
+  color: var(--text);
+}
+
+.confirm-note {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.danger-btn {
+  border: 0;
+  background: var(--danger);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 6px 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: filter 0.1s;
+}
+
+.danger-btn:hover {
+  filter: brightness(1.08);
+}
+
 .toast {
   position: absolute;
   left: 50%;
@@ -1209,6 +1241,12 @@ button {
   cursor: pointer;
 }
 
+.row-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
 .chip-btn {
   display: inline-flex;
   align-items: center;
@@ -1221,6 +1259,17 @@ button {
   font-size: 11.5px;
   cursor: pointer;
   transition: color 0.1s, border-color 0.1s, background 0.1s;
+}
+
+.chip-btn.danger.confirm {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #fff;
+}
+
+.chip-btn.danger.confirm:hover {
+  filter: brightness(1.08);
+  color: #fff;
 }
 
 .chip-btn:hover {
