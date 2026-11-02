@@ -89,9 +89,14 @@ export interface ClipNestApi {
   pin: (id: string, value: boolean) => Promise<boolean>
   star: (id: string, value: boolean) => Promise<boolean>
   seal: (id: string, value: boolean) => Promise<{ ok: boolean; sealed?: boolean; message?: string }>
+  drag: (id: string) => Promise<boolean>
   remove: (id: string) => Promise<boolean>
   reveal: (id: string) => Promise<boolean>
   clear: (keepPinned: boolean) => Promise<{ cleared: number }>
+  exportItems: (payload: {
+    ids?: string[]
+    format?: 'md' | 'json'
+  }) => Promise<{ ok: boolean; path?: string; count?: number; images?: number; canceled?: boolean; message?: string }>
   getImages: (ids: string[]) => Promise<Record<string, ImageAsset>>
   updateSettings: (patch: Partial<Settings>) => Promise<{ settings: Settings; hotkeyOk: boolean }>
   unlockVault: (password: string) => Promise<{ ok: boolean; message?: string; count?: number }>

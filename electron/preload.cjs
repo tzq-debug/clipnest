@@ -46,9 +46,11 @@ contextBridge.exposeInMainWorld('clipnest', {
   pin: (id, value) => ipcRenderer.invoke('item:pin', id, value),
   star: (id, value) => ipcRenderer.invoke('item:star', id, value),
   seal: (id, value) => ipcRenderer.invoke('item:seal', id, value),
+  drag: (id) => ipcRenderer.invoke('item:drag', id),
   remove: (id) => ipcRenderer.invoke('item:remove', id),
   reveal: (id) => ipcRenderer.invoke('item:reveal', id),
   clear: (keepPinned) => ipcRenderer.invoke('items:clear', keepPinned),
+  exportItems: (payload) => ipcRenderer.invoke('items:export', payload),
   getImages: (ids) => ipcRenderer.invoke('images:get', ids),
 
   updateSettings: (patch) => ipcRenderer.invoke('settings:update', patch),

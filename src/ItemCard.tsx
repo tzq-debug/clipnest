@@ -16,6 +16,7 @@ interface Props {
   onSeal: () => void
   onRemove: () => void
   onPreview: () => void
+  onDrag: () => void
 }
 
 function ItemCardBase({
@@ -30,7 +31,8 @@ function ItemCardBase({
   onStar,
   onSeal,
   onRemove,
-  onPreview
+  onPreview,
+  onDrag
 }: Props) {
   const picture = item.type === 'image' || item.isImage
   const icon = picture ? <ImageIcon size={13} /> : item.type === 'files' ? <FileIcon size={13} /> : <TextIcon size={13} />
@@ -75,7 +77,14 @@ function ItemCardBase({
         {picture && (
           <div
             className={`card-image${selectMode ? ' no-zoom' : ''}`}
-            title={selectMode ? undefined : '点击查看大图'}
+            title={selectMode ? undefined : '点击查看大图 · 按住可拖到聊天窗口或文件夹'}
+            draggable={!selectMode}
+            onDragStart={(e) => {
+              // Hand the drag to the main process: it has the real file path and
+              // can start a proper OS drag with a file drop.
+              e.preventDefault()
+              onDrag()
+            }}
             onMouseDown={(e) => {
               if (!selectMode) e.stopPropagation()
             }}

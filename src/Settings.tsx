@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { MergeSeparator, Settings as SettingsType } from './types'
-import { ArrowLeftIcon, FolderIcon, LockIcon, PauseIcon, TrashIcon } from './icons'
+import { ArrowLeftIcon, DownloadIcon, FolderIcon, LockIcon, PauseIcon, TrashIcon } from './icons'
 import { acceleratorLabel } from './utils'
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
   dataDir: string
   onUpdate: (patch: Partial<SettingsType>) => void
   onClear: (keepPinned: boolean) => void
+  onExport: (format: 'md' | 'json') => void
   onBack: () => void
 }
 
@@ -57,6 +58,7 @@ export default function Settings({
   dataDir,
   onUpdate,
   onClear,
+  onExport,
   onBack
 }: Props) {
   const [capturing, setCapturing] = useState(false)
@@ -358,6 +360,11 @@ export default function Settings({
           <Row title="历史数据只存在本机" hint="不联网、不上传，随时可以删">
             <button className="chip-btn" onClick={() => window.clipnest.openDataDir()}>
               <FolderIcon size={13} /> 打开目录
+            </button>
+          </Row>
+          <Row title="导出备份" hint="完整历史写成 JSON，图片一并复制出来">
+            <button className="chip-btn" onClick={() => onExport('json')}>
+              <DownloadIcon size={13} /> 导出
             </button>
           </Row>
           <Row title="清空历史" hint="只保留收藏的，置顶的也会被清掉">

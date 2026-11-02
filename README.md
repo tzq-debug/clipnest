@@ -31,6 +31,8 @@ The merged text is joined in the order you see on screen, with a separator you c
 - **Everything you copy** — plain text, HTML rich text, images, and files from your file manager.
 - **Screenshots become pictures** — screenshot tools usually put a `.png` *file* on the clipboard; ClipNest recognises it, generates a thumbnail and files it under images.
 - **Click to enlarge** — thumbnails open a preview; copy from there or hand it to your system image viewer.
+- **Drag a screenshot into a chat** — grab a thumbnail and drop it on WeChat, Slack or a folder; the receiving app gets a real file, not a clipboard blob.
+- **Export** — one button writes the history to Markdown (for sending to someone) or JSON (a full backup, flags included); pictures land in a folder next to the file.
 - **Search and filters** — live search, filter by text / image / file / starred.
 - **Star and pin are separate** — 收藏 (star) keeps an entry in the 收藏 filter and survives cleanup; 置顶 (pin) only floats it to the top of the list.
 - **One-click clean** — the trash button asks for confirmation in a bar at the bottom, then clears everything except starred entries. Pinned entries go too: pinning is only about order.
@@ -152,12 +154,24 @@ Detection only catches what looks like a credential. Anything else you want kept
 
 That entry is sealed with the same OS key, the card shows `手动加密 · 123 字符` instead of the text, and copying still returns the full content. Click the padlock again to turn it back into plain text. Images and file entries are not lockable this way — turn on the vault for those.
 
+### Exporting
+
+The download button in the header writes the history somewhere you choose:
+
+- **Markdown** — one section per entry with its time, flags and content. Pictures are referenced from a sibling `…_images/` folder instead of being inlined, so the file stays small and still renders when you send the folder along.
+- **JSON** (Settings → 导出备份) — every field including 收藏 and 置顶, for archiving or moving to another machine.
+
+Sealed entries become `[已加密内容]` with their length; their plaintext never leaves the app. A picture that can no longer be read is skipped rather than failing the whole export.
+
+If anything is selected, the button exports only the selection.
+
 ## Known limitations
 
 - The clipboard is polled every 420 ms; two extremely fast copies in a row can miss one
 - Copying files back relies on PowerShell `Set-Clipboard` on Windows; other platforms fall back to plain path text
 - Replay mode needs `xdotool` on Linux
 - The source application of a copy is not detected yet, so "never record anything from my password manager" rules are not possible
+- Dragging carries pictures only. Plain text has no file to hand to another program — copy and paste is the way there
 
 ## FAQ
 
@@ -185,6 +199,8 @@ electron/          main process, plain CommonJS (no build step)
   store.cjs          history and settings persistence
   vault.cjs          optional AES-256-GCM encryption
   sensitive.cjs      credential detection rules
+  export.cjs         Markdown / JSON export, pure functions
+  drag.cjs           which file a drag should carry
   paste.cjs          clipboard writes and keystroke simulation
   preload.cjs        the API exposed to the renderer
 src/               renderer, React + TypeScript
@@ -220,6 +236,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) before sending a patch.
 
 - [x] Encrypted storage (optional password)
 - [x] Sensitive-content detection with per-item sealing
+- [x] Export to Markdown / JSON, and dragging pictures out
 - [ ] OCR for screenshots, so pictures become searchable
 - [ ] Source-app detection and per-app ignore rules
 - [ ] Tags and groups

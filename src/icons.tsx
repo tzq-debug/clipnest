@@ -58,6 +58,14 @@ export const TrashIcon = (p: IconProps) => (
   </svg>
 )
 
+export const DownloadIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M12 4v10" />
+    <path d="m7.5 10 4.5 4.5L16.5 10" />
+    <path d="M5 19h14" />
+  </svg>
+)
+
 export const ImageIcon = (p: IconProps) => (
   <svg {...base(p)}>
     <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />

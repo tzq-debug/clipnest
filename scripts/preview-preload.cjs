@@ -187,6 +187,8 @@ const api = {
     return true
   },
   reveal: async () => true,
+  drag: async () => true,
+  exportItems: async (payload) => ({ ok: true, count: payload?.ids?.length || state.items.length, images: 1, path: 'D:/out/demo.md' }),
   clear: async () => {
     const cleared = state.items.filter((i) => !i.starred).length
     state.items = state.items.filter((i) => i.starred)

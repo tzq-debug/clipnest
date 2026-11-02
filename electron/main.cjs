@@ -9,7 +9,8 @@ const {
   Menu,
   screen,
   nativeImage,
-  shell
+  shell,
+  dialog
 } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs')
@@ -17,6 +18,8 @@ const fs = require('node:fs')
 const { Store } = require('./store.cjs')
 const { createWatcher } = require('./watcher.cjs')
 const { writeOne, writeMerged, pasteKeystroke, sleep } = require('./paste.cjs')
+const { suggestedName, writeExport } = require('./export.cjs')
+const { resolveDragFile } = require('./drag.cjs')
 
 const IS_DEV = Boolean(process.env.VITE_DEV_SERVER_URL)
 
@@ -37,6 +40,7 @@ let pendingTimer = null
 let collapseTimer = null
 let pushTimer = null
 let modalOpen = false
+let nativeDialog = false
 let vaultLocked = false
 
 if (process.platform === 'win32') app.setAppUserModelId('com.clipnest.app')
@@ -310,6 +314,9 @@ function createWindow() {
   })
 
   win.on('blur', () => {
+    // A native save dialog takes focus from us; collapsing here would hide the
+    // panel (and dismiss the dialog in palette mode) mid-export.
+    if (nativeDialog) return
     if (view === 'expanded' || view === 'palette') collapsePanel({ dismiss: view === 'palette' })
   })
 
@@ -489,8 +496,7 @@ function registerIpc() {
     return true
   })
 
-  ipcMain.handle('item:star', (_e, id, value) => {
-    if (vaultLocked) return false
+  ipcMain.handle('item:star', (_e, id, value) => {    if (vaultLocked) return false
     store.toggleStar(id, value)
     pushState()
     return true
@@ -501,6 +507,29 @@ function registerIpc() {
     const res = store.toggleSeal(id, value)
     if (res.ok) pushState()
     return res
+  })
+
+  /**
+   * Hand a picture to another program as a real file drop. Electron can only
+   * drag files that exist on disk, and a vault-encrypted picture is unreadable
+   * outside the app, so those get a decrypted copy in a temp folder first.
+   */
+  ipcMain.handle('item:drag', (_e, id) => {
+    const item = store.get(id)
+    if (!item) return false
+
+    const file = resolveDragFile(item, {
+      tempDir: path.join(app.getPath('temp'), 'clipnest-drag'),
+      readImage: (name) => {
+        const dataUrl = store.readImageAsset(name)
+        return dataUrl ? Buffer.from(dataUrl.split(',')[1], 'base64') : null
+      }
+    })
+    if (!file) return false
+
+    const icon = nativeImage.createFromPath(path.join(__dirname, '..', 'assets', 'icon.png'))
+    win.webContents.startDrag({ file, icon: icon.isEmpty() ? undefined : icon.resize({ width: 64, height: 64 }) })
+    return true
   })
 
   ipcMain.handle('item:remove', (_e, id) => {
@@ -526,6 +555,54 @@ function registerIpc() {
     pushState()
     if (tray) tray.setContextMenu(buildTrayMenu())
     return { cleared }
+  })
+
+  /**
+   * Export history to a file next to the user's chosen location. Markdown is
+   * for handing content to someone, JSON is a complete backup; pictures go into
+   * a sibling folder instead of being inlined so the result stays readable and
+   * the file size stays sane.
+   */
+  ipcMain.handle('items:export', async (_e, payload = {}) => {
+    if (vaultLocked) return { ok: false, message: '请先解锁' }
+
+    const format = payload.format === 'json' ? 'json' : 'md'
+    const ids = Array.isArray(payload.ids) ? payload.ids : []
+    const items = ids.length ? ids.map((id) => store.get(id)).filter(Boolean) : store.all().slice()
+    if (!items.length) return { ok: false, message: '没有可导出的内容' }
+
+    let picked = { canceled: true }
+    nativeDialog = true
+    try {
+      picked = await dialog.showSaveDialog(win, {
+        title: format === 'json' ? '导出为 JSON 备份' : '导出为 Markdown',
+        defaultPath: path.join(app.getPath('documents'), suggestedName(format)),
+        filters:
+          format === 'json'
+            ? [{ name: 'JSON 备份', extensions: ['json'] }]
+            : [{ name: 'Markdown', extensions: ['md'] }]
+      })
+    } finally {
+      nativeDialog = false
+    }
+
+    const { canceled, filePath } = picked
+    if (canceled || !filePath) return { ok: false, canceled: true }
+
+    let file = filePath
+    if (path.extname(file).toLowerCase() !== `.${format}`) file += `.${format}`
+
+    const readImage = (name) => {
+      const dataUrl = store.readImageAsset(name)
+      return dataUrl ? Buffer.from(dataUrl.split(',')[1], 'base64') : null
+    }
+
+    try {
+      const res = writeExport({ items, file, format, version: app.getVersion(), readImage })
+      return { ok: true, path: res.path, count: res.count, images: res.images }
+    } catch (err) {
+      return { ok: false, message: `写入失败：${err.message}` }
+    }
   })
 
   ipcMain.handle('images:get', (_e, ids) => {
@@ -660,7 +737,17 @@ function backfillImageFiles() {
   }
 }
 
+/** Drag-and-drop needs a real file on disk; these copies are throwaway. */
+function cleanDragTemp() {
+  try {
+    fs.rmSync(path.join(app.getPath('temp'), 'clipnest-drag'), { recursive: true, force: true })
+  } catch {
+    /* nothing to clean */
+  }
+}
+
 app.whenReady().then(() => {
+  cleanDragTemp()
   store = new Store(app.getPath('userData'))
   vaultLocked = store.vault.enabled
 

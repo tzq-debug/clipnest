@@ -77,6 +77,34 @@ app.whenReady().then(async () => {
     await wait(400)
   }
 
+  if (scenario === 'export') {
+    const info = await win.webContents.executeJavaScript(`
+      (() => {
+        document.querySelector('.icon-btn[aria-label="导出"]').click()
+        return new Promise((r) => setTimeout(() => r({
+          toast: document.querySelector('.toast')?.textContent || '(无提示)'
+        }), 500))
+      })()
+    `)
+    console.log('export toast:', JSON.stringify(info))
+    await wait(200)
+  }
+
+  if (scenario === 'drag') {
+    const info = await win.webContents.executeJavaScript(`
+      (() => {
+        const thumb = document.querySelector('.card-image')
+        if (!thumb) return { found: false }
+        const before = thumb.getAttribute('draggable')
+        const ev = new DragEvent('dragstart', { bubbles: true, cancelable: true })
+        thumb.dispatchEvent(ev)
+        return { found: true, draggable: before, prevented: ev.defaultPrevented }
+      })()
+    `)
+    console.log('drag wiring:', JSON.stringify(info))
+    await wait(300)
+  }
+
   if (scenario === 'seal') {
     const info = await win.webContents.executeJavaScript(`
       (() => {

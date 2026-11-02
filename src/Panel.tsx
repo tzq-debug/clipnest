@@ -3,7 +3,7 @@ import type { AppState, Filter, ImageAsset } from './types'
 import { ItemCard } from './ItemCard'
 import PreviewOverlay from './PreviewOverlay'
 import Settings from './Settings'
-import { CloseIcon, CopyIcon, ImageIcon, LayersIcon, PauseIcon, SearchIcon, SettingsIcon, StackIcon, TextIcon, FileIcon, TrashIcon, CheckIcon } from './icons'
+import { CloseIcon, CopyIcon, DownloadIcon, ImageIcon, LayersIcon, PauseIcon, SearchIcon, SettingsIcon, StackIcon, TextIcon, FileIcon, TrashIcon, CheckIcon } from './icons'
 import { matchesQuery } from './utils'
 
 const FILTERS: { key: Filter; label: string; icon?: React.ReactNode }[] = [
@@ -115,6 +115,23 @@ export default function Panel({ state }: { state: AppState }) {
     setSelected([])
     setSelectMode(false)
   }, [orderedSelection, filtered, active])
+
+  // One button, two scopes: whatever is selected, otherwise the whole history.
+  const runExport = useCallback(
+    async (format: 'md' | 'json' = 'md') => {
+      const ids = orderedSelection.length ? orderedSelection : []
+      const res = await window.clipnest.exportItems({ ids, format })
+      if (res.canceled) return
+      if (!res.ok) {
+        setToast(res.message || '导出失败')
+        return
+      }
+      const bits = [`已导出 ${res.count} 条`]
+      if (res.images) bits.push(`${res.images} 张图片`)
+      setToast(bits.join(' · '))
+    },
+    [orderedSelection]
+  )
 
   // Clearing used to be "click twice within three seconds", which silently
   // expired: a slower second click just re-armed the button and nothing
@@ -230,6 +247,16 @@ export default function Panel({ state }: { state: AppState }) {
         <div className="head-actions">
           {items.length > 0 && (
             <button
+              className="icon-btn"
+              title={orderedSelection.length ? `导出选中的 ${orderedSelection.length} 条` : '导出全部为 Markdown'}
+              aria-label="导出"
+              onClick={() => runExport()}
+            >
+              <DownloadIcon size={15} />
+            </button>
+          )}
+          {items.length > 0 && (
+            <button
               className={`icon-btn${confirmClear ? ' armed' : ''}`}
               title="清理历史（收藏会保留）"
               aria-label="清理历史"
@@ -267,6 +294,7 @@ export default function Panel({ state }: { state: AppState }) {
             window.clipnest.clear(keep)
             setSelected([])
           }}
+          onExport={(format) => runExport(format)}
           onBack={() => setScreen('list')}
         />
       ) : (
@@ -342,6 +370,7 @@ export default function Panel({ state }: { state: AppState }) {
                     setActive(idx)
                     setPreviewId(item.id)
                   }}
+                  onDrag={() => window.clipnest.drag(item.id)}
                   onToggleSelect={() => toggleSelect(item.id)}
                   onPin={() => window.clipnest.pin(item.id, !item.pinned)}
                   onStar={() => window.clipnest.star(item.id, !item.starred)}
