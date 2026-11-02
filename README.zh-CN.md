@@ -54,11 +54,13 @@
 
 | 系统 | 下载 |
 | --- | --- |
-| Windows | [ClipNest-x.y.z-x64.exe](https://github.com/tzq-debug/clipnest/releases/latest) |
+| Windows | [安装版 `ClipNest-x.y.z-x64.exe`](https://github.com/tzq-debug/clipnest/releases/latest) · [绿色版 `ClipNest-x.y.z-x64.zip`](https://github.com/tzq-debug/clipnest/releases/latest) |
 | macOS | 从源码构建（暂未提供 `.dmg`） |
 | Linux | 从源码构建（暂未提供 `.AppImage`） |
 
 Windows 安装包没有代码签名，SmartScreen 会拦一下，点「更多信息 → 仍要运行」。
+
+绿色版不需要安装：解压到任意位置，双击 `ClipNest.exe` 即可。历史仍存在 `%APPDATA%\ClipNest`，和安装版共用同一份数据，两边可以随时切换。
 
 ### 从源码运行
 

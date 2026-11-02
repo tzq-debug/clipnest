@@ -54,11 +54,13 @@ The merged text is joined in the order you see on screen, with a separator you c
 
 | Platform | Download |
 | --- | --- |
-| Windows | [ClipNest-x.y.z-x64.exe](https://github.com/tzq-debug/clipnest/releases/latest) |
+| Windows | [installer `ClipNest-x.y.z-x64.exe`](https://github.com/tzq-debug/clipnest/releases/latest) · [portable `ClipNest-x.y.z-x64.zip`](https://github.com/tzq-debug/clipnest/releases/latest) |
 | macOS | build from source (no `.dmg` yet) |
 | Linux | build from source (no `.AppImage` yet) |
 
 The Windows build is not code-signed, so SmartScreen will warn you: **More info → Run anyway**.
+
+The `.zip` needs no installation: unzip it anywhere and run `ClipNest.exe`. History still lives in `%APPDATA%\ClipNest`, shared with the installer build, so you can switch between the two.
 
 ### From source
 

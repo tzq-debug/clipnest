@@ -19,6 +19,11 @@ win:
     - target: nsis
       arch:
         - x64
+    # Unzip and run — no installer, nothing written to Program Files. The
+    # history still lives in %APPDATA%\ClipNest, shared with the installer build.
+    - target: zip
+      arch:
+        - x64
   icon: build/icon.ico
   artifactName: ClipNest-${version}-${arch}.${ext}
 
