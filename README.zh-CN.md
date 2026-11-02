@@ -228,7 +228,14 @@ npm run dist       # 打包当前平台
 
 Windows 上也可以直接双击项目根目录的 `dev.bat`。
 
-没有测试框架。`npx electron scripts/probe-vault.cjs` 会把加密全流程跑一遍——加密、重启后锁定、错误密码、解锁、解密——每条断言输出 PASS/FAIL。`npm run preview` 用假数据渲染界面，不碰真实剪贴板。
+没有测试框架，但大部分行为都有断言脚本兜着：
+
+```bash
+npm test          # 类型检查 + 下面全部探针
+npm run test:app  # 只跑需要真实 Electron 运行时的那几个
+```
+
+每个探针逐条输出 `PASS` / `FAIL`，失败时退出码非零。`probe-export`、`probe-drag` 是纯 node（它们覆盖的模块刻意不依赖 Electron）；`probe-vault`、`probe-sensitive`、`probe-seal` 需要启动 Electron，因为要碰 `safeStorage`。`npm run preview` 用假数据渲染界面，不碰真实剪贴板。
 
 改代码前值得知道的几点：
 

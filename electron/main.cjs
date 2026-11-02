@@ -265,6 +265,26 @@ function lockVault() {
 
 /* ------------------------------------------------------------------ window */
 
+/** Stored pictures come back as data URLs; export and drag both need raw bytes. */
+function readImageBuffer(name) {
+  const dataUrl = store.readImageAsset(name)
+  return dataUrl ? Buffer.from(dataUrl.split(',')[1], 'base64') : null
+}
+
+/** Where decrypted copies wait for a drag to pick them up. */
+function dragTempDir() {
+  return path.join(app.getPath('temp'), 'clipnest-drag')
+}
+
+/** Drag-and-drop needs a real file on disk; these copies are throwaway. */
+function cleanDragTemp() {
+  try {
+    fs.rmSync(dragTempDir(), { recursive: true, force: true })
+  } catch {
+    /* nothing to clean */
+  }
+}
+
 function createWindow() {
   const initial = boundsFor('collapsed')
   win = new BrowserWindow({
@@ -518,13 +538,7 @@ function registerIpc() {
     const item = store.get(id)
     if (!item) return false
 
-    const file = resolveDragFile(item, {
-      tempDir: path.join(app.getPath('temp'), 'clipnest-drag'),
-      readImage: (name) => {
-        const dataUrl = store.readImageAsset(name)
-        return dataUrl ? Buffer.from(dataUrl.split(',')[1], 'base64') : null
-      }
-    })
+    const file = resolveDragFile(item, { tempDir: dragTempDir(), readImage: readImageBuffer })
     if (!file) return false
 
     const icon = nativeImage.createFromPath(path.join(__dirname, '..', 'assets', 'icon.png'))
@@ -592,13 +606,14 @@ function registerIpc() {
     let file = filePath
     if (path.extname(file).toLowerCase() !== `.${format}`) file += `.${format}`
 
-    const readImage = (name) => {
-      const dataUrl = store.readImageAsset(name)
-      return dataUrl ? Buffer.from(dataUrl.split(',')[1], 'base64') : null
-    }
-
     try {
-      const res = writeExport({ items, file, format, version: app.getVersion(), readImage })
+      const res = writeExport({
+        items,
+        file,
+        format,
+        version: app.getVersion(),
+        readImage: readImageBuffer
+      })
       return { ok: true, path: res.path, count: res.count, images: res.images }
     } catch (err) {
       return { ok: false, message: `写入失败：${err.message}` }
@@ -734,15 +749,6 @@ function backfillImageFiles() {
   if (changed) {
     store.scheduleSave()
     pushState()
-  }
-}
-
-/** Drag-and-drop needs a real file on disk; these copies are throwaway. */
-function cleanDragTemp() {
-  try {
-    fs.rmSync(path.join(app.getPath('temp'), 'clipnest-drag'), { recursive: true, force: true })
-  } catch {
-    /* nothing to clean */
   }
 }
 

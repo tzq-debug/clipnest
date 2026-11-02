@@ -23,6 +23,13 @@ Most clipboard managers stop at "get it back". ClipNest goes one step further: *
 
 The merged text is joined in the order you see on screen, with a separator you choose.
 
+<details>
+<summary>What multi-select looks like</summary>
+
+![multi-select](docs/screenshot-select.png)
+
+</details>
+
 ## Features
 
 - **Edge dock** — a slim strip on the right edge of the screen. Hover to expand, move away to collapse. No taskbar button.
@@ -221,7 +228,14 @@ npm run dist       # build an installer
 
 Windows users can also double-click `dev.bat` at the project root.
 
-There is no test framework. `npx electron scripts/probe-vault.cjs` exercises the encryption path end to end — encrypt, reopen locked, wrong password, unlock, decrypt — and prints PASS/FAIL per assertion. `npm run preview` renders the UI against mock data without touching the clipboard.
+There is no test framework, but most behaviour is pinned down by assertion scripts:
+
+```bash
+npm test        # typecheck + every probe below
+npm run test:app  # just the ones that need a real Electron runtime
+```
+
+Each probe prints `PASS` / `FAIL` per assertion and exits non-zero on failure. `probe-export` and `probe-drag` are plain node (the modules they cover avoid Electron on purpose); `probe-vault`, `probe-sensitive` and `probe-seal` boot Electron because they touch `safeStorage`. `npm run preview` renders the UI against mock data without touching the clipboard.
 
 A few things worth knowing before touching the code:
 

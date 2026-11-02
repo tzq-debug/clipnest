@@ -453,4 +453,4 @@ class Store {
   }
 }
 
-module.exports = { Store, DEFAULT_SETTINGS }
+module.exports = { Store }

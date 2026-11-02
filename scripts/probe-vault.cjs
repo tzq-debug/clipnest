@@ -73,6 +73,6 @@ app.whenReady().then(() => {
   ok('解密后条目仍在', JSON.parse(fs.readFileSync(jsonFile, 'utf8')).items[0].text === 'hello secret')
 
   fs.rmSync(dir, { recursive: true, force: true })
-  console.log(failures === 0 ? '\n全部通过' : `\n${failures} 项失败`)
-  app.quit()
+  console.log(failures ? `\n${failures} check(s) failed` : '\nall checks passed')
+  app.exit(failures ? 1 : 0)
 })

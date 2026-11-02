@@ -28,11 +28,15 @@ Useful commands:
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Vite + Electron with hot reload |
-| `npm run typecheck` | `tsc --noEmit`, must pass before a PR |
+| `npm test` | Typecheck plus every assertion script; must pass before a PR |
+| `npm run test:app` | Only the probes that need a real Electron runtime |
+| `npm run typecheck` | `tsc --noEmit` |
 | `npm run preview` | Render the UI against mock data and write a screenshot — no clipboard access |
 | `npm run dist` | Build an installer for the current platform |
 
 On Windows you can also double-click `dev.bat`.
+
+When you change behaviour that a probe covers, change the probe in the same commit — they are the only tests there are.
 
 ## How the code is organised
 

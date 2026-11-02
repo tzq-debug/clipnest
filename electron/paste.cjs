@@ -201,4 +201,4 @@ function pasteKeystroke() {
   }
 }
 
-module.exports = { writeOne, writeMerged, writeFileList, writeText, pasteKeystroke, sleep, SEPARATORS }
+module.exports = { writeOne, writeMerged, pasteKeystroke, sleep }

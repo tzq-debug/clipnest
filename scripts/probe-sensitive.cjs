@@ -86,6 +86,6 @@ app.whenReady().then(() => {
   ok('从磁盘读回后仍可解密', store.revealText(store.get('s1')) === secret)
 
   fs.rmSync(dir, { recursive: true, force: true })
-  console.log(failures === 0 ? '\n全部通过' : `\n${failures} 项失败`)
-  app.quit()
+  console.log(failures ? `\n${failures} check(s) failed` : '\nall checks passed')
+  app.exit(failures ? 1 : 0)
 })
