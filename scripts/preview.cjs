@@ -95,10 +95,13 @@ app.whenReady().then(async () => {
       (() => {
         const thumb = document.querySelector('.card-image')
         if (!thumb) return { found: false }
-        const before = thumb.getAttribute('draggable')
+        const img = thumb.querySelector('img')
+        const before = { wrapper: thumb.getAttribute('draggable'), img: img && img.getAttribute('draggable') }
+        // start the drag on the <img>: that is what the pointer actually hits
+        const target = img || thumb
         const ev = new DragEvent('dragstart', { bubbles: true, cancelable: true })
-        thumb.dispatchEvent(ev)
-        return { found: true, draggable: before, prevented: ev.defaultPrevented }
+        target.dispatchEvent(ev)
+        return { found: true, ...before, hitImg: Boolean(img), prevented: ev.defaultPrevented }
       })()
     `)
     console.log('drag wiring:', JSON.stringify(info))

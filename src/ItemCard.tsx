@@ -80,6 +80,7 @@ function ItemCardBase({
             title={selectMode ? undefined : '点击查看大图 · 按住可拖到聊天窗口或文件夹'}
             draggable={!selectMode}
             onDragStart={(e) => {
+              if (selectMode) return
               // Hand the drag to the main process: it has the real file path and
               // can start a proper OS drag with a file drop.
               e.preventDefault()
@@ -92,7 +93,7 @@ function ItemCardBase({
               if (!selectMode) onPreview()
             }}
           >
-            {asset?.thumb ? <img src={asset.thumb} alt="" draggable={false} /> : <div className="img-skeleton" />}
+            {asset?.thumb ? <img src={asset.thumb} alt="" /> : <div className="img-skeleton" />}
             <span className="img-dims">
               {item.width}×{item.height}
             </span>

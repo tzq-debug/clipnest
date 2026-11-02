@@ -460,6 +460,7 @@ export default function Panel({ state }: { state: AppState }) {
             runCopy('merged', [previewItem.id])
           }}
           onOpen={() => window.clipnest.openImage(previewItem.id)}
+          onDrag={() => window.clipnest.drag(previewItem.id)}
         />
       )}
     </div>

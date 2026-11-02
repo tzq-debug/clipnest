@@ -41,6 +41,8 @@ let collapseTimer = null
 let pushTimer = null
 let modalOpen = false
 let nativeDialog = false
+/** True from the moment a drag starts until the drop has settled. */
+let dragging = false
 let vaultLocked = false
 
 if (process.platform === 'win32') app.setAppUserModelId('com.clipnest.app')
@@ -337,6 +339,8 @@ function createWindow() {
     // A native save dialog takes focus from us; collapsing here would hide the
     // panel (and dismiss the dialog in palette mode) mid-export.
     if (nativeDialog) return
+    // Dragging towards another window is not the user leaving us.
+    if (dragging) return
     if (view === 'expanded' || view === 'palette') collapsePanel({ dismiss: view === 'palette' })
   })
 
@@ -493,7 +497,7 @@ function registerIpc() {
       // from whatever the user is typing into.
       if (view === 'collapsed') expandPanel({ focus: false })
     } else {
-      scheduleCollapse()
+      if (!dragging) scheduleCollapse()
     }
     return true
   })
@@ -542,7 +546,19 @@ function registerIpc() {
     if (!file) return false
 
     const icon = nativeImage.createFromPath(path.join(__dirname, '..', 'assets', 'icon.png'))
-    win.webContents.startDrag({ file, icon: icon.isEmpty() ? undefined : icon.resize({ width: 64, height: 64 }) })
+    dragging = true
+    try {
+      win.webContents.startDrag({ file, icon: icon.isEmpty() ? undefined : icon.resize({ width: 64, height: 64 }) })
+    } finally {
+      // The drop hands focus to the window under the cursor, which fires blur on
+      // us. Wait for that blur to arrive and be ignored, then collapse only if
+      // we really are in the background.
+      setTimeout(() => {
+        dragging = false
+        if (!win || win.isDestroyed() || win.isFocused() || view === 'collapsed') return
+        collapsePanel({ dismiss: view === 'palette' })
+      }, 900)
+    }
     return true
   })
 

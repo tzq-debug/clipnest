@@ -9,9 +9,10 @@ interface Props {
   onClose: () => void
   onCopy: () => void
   onOpen: () => void
+  onDrag: () => void
 }
 
-export default function PreviewOverlay({ item, asset, onClose, onCopy, onOpen }: Props) {
+export default function PreviewOverlay({ item, asset, onClose, onCopy, onOpen, onDrag }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -40,7 +41,14 @@ export default function PreviewOverlay({ item, asset, onClose, onCopy, onOpen }:
 
         <div className="preview-stage">
           {asset?.full ? (
-            <img src={asset.full} alt={title} draggable={false} />
+            <img
+              src={asset.full}
+              alt={title}
+              onDragStart={(e) => {
+                e.preventDefault()
+                onDrag()
+              }}
+            />
           ) : (
             <div className="preview-loading">图片加载中…</div>
           )}
