@@ -54,6 +54,7 @@ let state = {
     ignoreKeywords: ['password'],
     shortcut: 'Control+Shift+V',
     collapseOnCopy: true,
+    stayOpen: true,
     sequentialDelay: 380,
     mergeSeparator: 'newline',
     showDock: true,
@@ -144,7 +145,7 @@ const api = {
     push()
     return v
   },
-  hover: async () => true,
+  collapse: async () => true,
   dismiss: async () => true,
   copy: async (ids, mode) => {
     console.log('[mock-copy]', mode, JSON.stringify(ids))

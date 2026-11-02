@@ -1,9 +1,9 @@
 'use strict'
 
 /**
- * Works out which file on disk represents an entry, so the main process can
- * hand it to `webContents.startDrag`. Electron can only drag real files, and a
- * vault-encrypted picture is unreadable to other programs, so stored pictures
+ * Works out which files on disk represent an entry, so the main process can
+ * hand them to `webContents.startDrag`. Electron can only drag real files, and
+ * a vault-encrypted picture is unreadable to other programs, so stored pictures
  * are decrypted into a temp copy first.
  */
 
@@ -22,26 +22,26 @@ function isFile(p) {
  * @param item       history entry
  * @param tempDir    where decrypted copies go
  * @param readImage  (storedName) => Buffer | null
- * @returns absolute file path, or null when there is nothing draggable
+ * @returns absolute file paths; empty when there is nothing draggable
  */
-function resolveDragFile(item, { tempDir, readImage }) {
-  if (!item) return null
+function resolveDragFiles(item, { tempDir, readImage }) {
+  if (!item) return []
 
-  // A file the user copied from Explorer is already on disk, and dragging the
-  // original keeps its name and contents intact.
-  const external = (item.files || []).find(isFile)
-  if (external) return external
+  // Files the user copied from Explorer are already on disk; dragging the
+  // originals keeps their names intact, and an entry can hold several of them.
+  const external = (item.files || []).filter(isFile)
+  if (external.length) return external
 
   const name = item.image || item.big || item.thumb
-  if (!name) return null
+  if (!name) return []
 
   const buffer = readImage(name)
-  if (!buffer || !buffer.length) return null
+  if (!buffer || !buffer.length) return []
 
   fs.mkdirSync(tempDir, { recursive: true })
   const file = path.join(tempDir, `${item.id}.png`)
   fs.writeFileSync(file, buffer)
-  return file
+  return [file]
 }
 
-module.exports = { resolveDragFile }
+module.exports = { resolveDragFiles }

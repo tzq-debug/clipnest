@@ -3,7 +3,7 @@ import type { AppState, Filter, ImageAsset } from './types'
 import { ItemCard } from './ItemCard'
 import PreviewOverlay from './PreviewOverlay'
 import Settings from './Settings'
-import { CloseIcon, CopyIcon, DownloadIcon, ImageIcon, LayersIcon, PauseIcon, SearchIcon, SettingsIcon, StackIcon, TextIcon, FileIcon, TrashIcon, CheckIcon } from './icons'
+import { CloseIcon, CopyIcon, DownloadIcon, ImageIcon, LayersIcon, MinusIcon, PauseIcon, SearchIcon, SettingsIcon, StackIcon, TextIcon, FileIcon, TrashIcon, CheckIcon } from './icons'
 import { matchesQuery } from './utils'
 
 const FILTERS: { key: Filter; label: string; icon?: React.ReactNode }[] = [
@@ -22,6 +22,8 @@ export default function Panel({ state }: { state: AppState }) {
   const [active, setActive] = useState(0)
   const [screen, setScreen] = useState<'list' | 'settings'>('list')
   const [toast, setToast] = useState('')
+  /** Number of files hovering over the panel, 0 when nothing is being dropped. */
+  const [dropCount, setDropCount] = useState(0)
   const [images, setImages] = useState<Record<string, ImageAsset>>({})
   const [previewId, setPreviewId] = useState<string | null>(null)
   const [selectMode, setSelectMode] = useState(false)
@@ -231,7 +233,35 @@ export default function Panel({ state }: { state: AppState }) {
   }, [allSelected, filtered])
 
   return (
-    <div className="panel">
+    <div
+      className="panel"
+      onDragOver={(e) => {
+        if (!e.dataTransfer.types.includes('Files')) return
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'copy'
+        const n = e.dataTransfer.items.length
+        if (n !== dropCount) setDropCount(n || 1)
+      }}
+      onDragLeave={(e) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+        setDropCount(0)
+      }}
+      onDrop={async (e) => {
+        if (!e.dataTransfer.types.includes('Files')) return
+        e.preventDefault()
+        setDropCount(0)
+        const paths = Array.from(e.dataTransfer.files)
+          .map((f) => window.clipnest.pathForFile(f))
+          .filter(Boolean)
+        if (!paths.length) return
+        const res = await window.clipnest.dropFiles(paths)
+        if (!res.ok) {
+          setToast(res.message || '添加失败')
+          return
+        }
+        setToast(res.isNew ? `已添加 ${res.count} 个文件` : '这条已经在历史里了')
+      }}
+    >
       <header className="head" onMouseDown={(e) => e.stopPropagation()}>
         <div className="brand">
           <span className="brand-mark">
@@ -276,7 +306,15 @@ export default function Panel({ state }: { state: AppState }) {
           >
             <SettingsIcon size={15} />
           </button>
-          <button className="icon-btn" title="收起 (Esc)" aria-label="收起" onClick={() => window.clipnest.dismiss()}>
+          <button
+            className="icon-btn"
+            title="收起到边缘（Esc）"
+            aria-label="收起到边缘"
+            onClick={() => window.clipnest.collapse()}
+          >
+            <MinusIcon size={15} />
+          </button>
+          <button className="icon-btn" title="隐藏到托盘" aria-label="隐藏" onClick={() => window.clipnest.dismiss()}>
             <CloseIcon size={15} />
           </button>
         </div>
@@ -462,6 +500,12 @@ export default function Panel({ state }: { state: AppState }) {
           onOpen={() => window.clipnest.openImage(previewItem.id)}
           onDrag={() => window.clipnest.drag(previewItem.id)}
         />
+      )}
+
+      {dropCount > 0 && (
+        <div className="drop-hint">
+          <span>松手添加{dropCount > 1 ? `这 ${dropCount} 个文件` : '这个文件'}</span>
+        </div>
       )}
     </div>
   )

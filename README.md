@@ -32,13 +32,15 @@ The merged text is joined in the order you see on screen, with a separator you c
 
 ## Features
 
-- **Edge dock** — a slim strip on the right edge of the screen. Hover to expand, move away to collapse. No taskbar button.
+- **Edge dock** — a slim strip on the right edge of the screen. Click it to open the panel; nothing opens just because the pointer brushed past. No taskbar button.
+- **Stays where you put it** — unless you collapse it with `-` or hide it with `×`, the panel keeps sitting there. Drag its header to move it; the position is remembered.
 - **Global hotkey** — `Ctrl+Shift+V` by default, rebindable.
 - **Batch paste** — tick any number of entries, then merge them into one clipboard payload or replay them one by one.
 - **Everything you copy** — plain text, HTML rich text, images, and files from your file manager.
 - **Screenshots become pictures** — screenshot tools usually put a `.png` *file* on the clipboard; ClipNest recognises it, generates a thumbnail and files it under images.
 - **Click to enlarge** — thumbnails open a preview; copy from there or hand it to your system image viewer.
 - **Drag a screenshot into a chat** — grab a thumbnail and drop it on WeChat, Slack or a folder; the receiving app gets a real file, not a clipboard blob.
+- **Drop files in** — drag files from Explorer onto the panel and they join the history, thumbnails and all. No need to copy them first.
 - **Export** — one button writes the history to Markdown (for sending to someone) or JSON (a full backup, flags included); pictures land in a folder next to the file.
 - **Search and filters** — live search, filter by text / image / file / starred.
 - **Star and pin are separate** — 收藏 (star) keeps an entry in the 收藏 filter and survives cleanup; 置顶 (pin) only floats it to the top of the list.

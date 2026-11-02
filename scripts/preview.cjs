@@ -90,18 +90,41 @@ app.whenReady().then(async () => {
     await wait(200)
   }
 
+  if (scenario === 'drop') {
+    const info = await win.webContents.executeJavaScript(`
+      (() => {
+        const panel = document.querySelector('.panel')
+        const dt = new DataTransfer()
+        dt.items.add(new File(['x'], '截图.png', { type: 'image/png' }))
+        dt.items.add(new File(['y'], '报告.pdf', { type: 'application/pdf' }))
+        panel.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt }))
+        return new Promise((r) => setTimeout(() => r({
+          hint: document.querySelector('.drop-hint')?.textContent || '(无提示)'
+        }), 300))
+      })()
+    `)
+    console.log('drop overlay:', JSON.stringify(info))
+    await wait(200)
+  }
+
   if (scenario === 'drag') {
     const info = await win.webContents.executeJavaScript(`
       (() => {
+        const out = {}
         const thumb = document.querySelector('.card-image')
-        if (!thumb) return { found: false }
-        const img = thumb.querySelector('img')
-        const before = { wrapper: thumb.getAttribute('draggable'), img: img && img.getAttribute('draggable') }
-        // start the drag on the <img>: that is what the pointer actually hits
-        const target = img || thumb
-        const ev = new DragEvent('dragstart', { bubbles: true, cancelable: true })
-        target.dispatchEvent(ev)
-        return { found: true, ...before, hitImg: Boolean(img), prevented: ev.defaultPrevented }
+        if (thumb) {
+          const img = thumb.querySelector('img')
+          const ev = new DragEvent('dragstart', { bubbles: true, cancelable: true })
+          ;(img || thumb).dispatchEvent(ev)
+          out.image = { draggable: thumb.getAttribute('draggable'), hitImg: Boolean(img), prevented: ev.defaultPrevented }
+        }
+        const files = document.querySelector('.card-files')
+        if (files) {
+          const ev = new DragEvent('dragstart', { bubbles: true, cancelable: true })
+          files.dispatchEvent(ev)
+          out.files = { draggable: files.getAttribute('draggable'), prevented: ev.defaultPrevented }
+        }
+        return out
       })()
     `)
     console.log('drag wiring:', JSON.stringify(info))

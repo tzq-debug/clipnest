@@ -14,7 +14,9 @@ export default function DockStrip({ count, paused }: { count: number; paused: bo
   return (
     <div
       className="dock"
-      onMouseEnter={() => window.clipnest.hover(true)}
+      // No hover-to-expand on purpose: the strip sits on the screen edge, and a
+      // pointer on its way somewhere else kept opening the panel. A click is
+      // deliberate, brush-past is not.
       onClick={() => window.clipnest.setView('expanded')}
     >
       <div className={`dock-pill${pulse ? ' pulse' : ''}${paused ? ' paused' : ''}`} title="ClipNest · 点击展开">

@@ -101,7 +101,23 @@ function ItemCardBase({
         )}
 
         {item.type === 'files' && !item.isImage && (
-          <ul className="card-files">
+          <ul
+            className="card-files"
+            title="按住可拖到聊天窗口或文件夹"
+            draggable={!selectMode}
+            onDragStart={(e) => {
+              if (selectMode) return
+              e.preventDefault()
+              onDrag()
+            }}
+            onMouseDown={(e) => {
+              // Copy on click, but let a drag start instead of copying on press.
+              if (!selectMode) e.stopPropagation()
+            }}
+            onClick={() => {
+              if (!selectMode) onActivate()
+            }}
+          >
             {(item.files || []).slice(0, 3).map((f) => (
               <li key={f}>
                 <FileIcon size={12} />

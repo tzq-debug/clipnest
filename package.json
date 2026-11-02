@@ -1,7 +1,7 @@
 {
   "name": "clipnest",
   "productName": "ClipNest",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "private": true,
   "description": "Clipboard history with multi-select batch paste. Edge-docked, always one keystroke away.",
   "license": "MIT",
@@ -32,7 +32,7 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "test": "npm run typecheck && node scripts/probe-export.cjs && node scripts/probe-drag.cjs && npm run test:app",
-    "test:app": "electron scripts/probe-vault.cjs && electron scripts/probe-sensitive.cjs && electron scripts/probe-seal.cjs",
+    "test:app": "electron scripts/probe-vault.cjs && electron scripts/probe-sensitive.cjs && electron scripts/probe-seal.cjs && electron scripts/probe-drop.cjs",
     "start": "npm run build && electron .",
     "preview": "vite build && electron scripts/preview.cjs list",
     "pack": "vite build && electron-builder --dir",

@@ -1,6 +1,6 @@
 'use strict'
 
-const { contextBridge, ipcRenderer } = require('electron')
+const { contextBridge, ipcRenderer, webUtils } = require('electron')
 
 const listeners = new Set()
 const closingListeners = new Set()
@@ -37,8 +37,8 @@ contextBridge.exposeInMainWorld('clipnest', {
   },
 
   setView: (view) => ipcRenderer.invoke('view:set', view),
-  hover: (inside) => ipcRenderer.invoke('view:hover', inside),
   dismiss: () => ipcRenderer.invoke('view:dismiss'),
+  collapse: () => ipcRenderer.invoke('view:collapse'),
 
   copy: (ids, mode) => ipcRenderer.invoke('copy', { ids, mode }),
   openImage: (id) => ipcRenderer.invoke('image:open', id),
@@ -47,6 +47,10 @@ contextBridge.exposeInMainWorld('clipnest', {
   star: (id, value) => ipcRenderer.invoke('item:star', id, value),
   seal: (id, value) => ipcRenderer.invoke('item:seal', id, value),
   drag: (id) => ipcRenderer.invoke('item:drag', id),
+  // Files dropped from Explorer arrive as File objects; only the preload can
+  // turn one into a real path.
+  pathForFile: (file) => webUtils.getPathForFile(file),
+  dropFiles: (paths) => ipcRenderer.invoke('files:drop', paths),
   remove: (id) => ipcRenderer.invoke('item:remove', id),
   reveal: (id) => ipcRenderer.invoke('item:reveal', id),
   clear: (keepPinned) => ipcRenderer.invoke('items:clear', keepPinned),

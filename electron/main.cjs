@@ -19,7 +19,7 @@ const { Store } = require('./store.cjs')
 const { createWatcher } = require('./watcher.cjs')
 const { writeOne, writeMerged, pasteKeystroke, sleep } = require('./paste.cjs')
 const { suggestedName, writeExport } = require('./export.cjs')
-const { resolveDragFile } = require('./drag.cjs')
+const { resolveDragFiles } = require('./drag.cjs')
 
 const IS_DEV = Boolean(process.env.VITE_DEV_SERVER_URL)
 
@@ -37,12 +37,14 @@ let quitting = false
 let hotkeyOk = true
 let animTimer = null
 let pendingTimer = null
-let collapseTimer = null
 let pushTimer = null
 let modalOpen = false
 let nativeDialog = false
 /** True from the moment a drag starts until the drop has settled. */
 let dragging = false
+/** Where the panel sits once the user has dragged it. */
+let panelPos = null
+let posTimer = null
 let vaultLocked = false
 
 if (process.platform === 'win32') app.setAppUserModelId('com.clipnest.app')
@@ -91,6 +93,14 @@ function boundsFor(target) {
 
   if (target === 'expanded') {
     const h = Math.min(PANEL.height, primary.height - 32)
+    // Once the user has dragged the panel somewhere, keep it there instead of
+    // snapping back to the right edge.
+    const saved = store && (panelPos || store.settings.panelPos)
+    if (saved) {
+      const x = Math.min(Math.max(saved.x, primary.x), primary.x + primary.width - PANEL.width)
+      const y = Math.min(Math.max(saved.y, primary.y), primary.y + primary.height - h)
+      return { width: PANEL.width, height: h, x, y }
+    }
     return {
       width: PANEL.width,
       height: h,
@@ -198,9 +208,7 @@ function pushState(nextView) {
 /* ------------------------------------------------------------------ views */
 
 function clearTimers() {
-  if (collapseTimer) clearTimeout(collapseTimer)
   if (pendingTimer) clearTimeout(pendingTimer)
-  collapseTimer = null
   pendingTimer = null
 }
 
@@ -244,14 +252,6 @@ function collapsePanel({ dismiss = false } = {}) {
     }
     pushState()
   }, 130)
-}
-
-function scheduleCollapse() {  if (view !== 'expanded' || locked) return
-  if (collapseTimer) clearTimeout(collapseTimer)
-  collapseTimer = setTimeout(() => {
-    collapseTimer = null
-    if (view === 'expanded' && !locked) collapsePanel()
-  }, 320)
 }
 
 /** Drop the key, stop recording, and put the lock screen in front. */
@@ -298,7 +298,7 @@ function createWindow() {
     backgroundColor: '#00000000',
     hasShadow: false,
     resizable: false,
-    movable: false,
+    movable: true,
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
@@ -332,6 +332,12 @@ function createWindow() {
       return
     }
     if (!store.settings.showDock) return
+    // A panel that is meant to stay on screen should start as a panel, not as
+    // the little edge strip.
+    if (store.settings.stayOpen) {
+      expandPanel({ focus: false })
+      return
+    }
     win.showInactive()
   })
 
@@ -341,6 +347,9 @@ function createWindow() {
     if (nativeDialog) return
     // Dragging towards another window is not the user leaving us.
     if (dragging) return
+    // The user asked for a panel that stays put; only the close and collapse
+    // buttons are allowed to take it off screen.
+    if (store.settings.stayOpen) return
     if (view === 'expanded' || view === 'palette') collapsePanel({ dismiss: view === 'palette' })
   })
 
@@ -355,7 +364,9 @@ function createWindow() {
     if (input.type === 'keyDown' && input.key === 'Escape') {
       if (modalOpen) return // the renderer owns Escape while a preview is open
       event.preventDefault()
-      collapsePanel({ dismiss: view === 'palette' })
+      // Esc shrinks the panel to the strip rather than making it vanish when the
+      // user has asked for a permanent one.
+      collapsePanel({ dismiss: view === 'palette' && !store.settings.stayOpen })
     }
   })
 }
@@ -490,21 +501,27 @@ function registerIpc() {
     return view
   })
 
-  ipcMain.handle('view:hover', (_e, inside) => {
-    if (inside) {
-      clearTimers()
-      // Expanding because the pointer touched the dock strip must not steal focus
-      // from whatever the user is typing into.
-      if (view === 'collapsed') expandPanel({ focus: false })
-    } else {
-      if (!dragging) scheduleCollapse()
-    }
-    return true
-  })
-
   ipcMain.handle('view:dismiss', () => {
     collapsePanel({ dismiss: true })
     return true
+  })
+
+  /** The "-" button: shrink to the edge strip, never hide the window. */
+  ipcMain.handle('view:collapse', () => {
+    collapsePanel()
+    return true
+  })
+
+  /** Remember where the user dragged the panel, without a write per pixel. */
+  win.on('moved', () => {
+    if (view !== 'expanded') return
+    const [x, y] = win.getPosition()
+    panelPos = { x, y }
+    if (posTimer) clearTimeout(posTimer)
+    posTimer = setTimeout(() => {
+      posTimer = null
+      if (panelPos) store.updateSettings({ panelPos })
+    }, 600)
   })
 
   ipcMain.handle('ui:modal', (_e, open) => {
@@ -538,24 +555,40 @@ function registerIpc() {
    * drag files that exist on disk, and a vault-encrypted picture is unreadable
    * outside the app, so those get a decrypted copy in a temp folder first.
    */
+  /** Files dropped onto the window, as opposed to files copied elsewhere. */
+  ipcMain.handle('files:drop', (_e, paths) => {
+    if (vaultLocked) return { ok: false, message: '请先解锁' }
+    const result = store.importPaths(paths)
+    if (!result) return { ok: false, message: '没有可添加的文件' }
+    pushState()
+    return { ok: true, isNew: result.isNew, count: (result.item.files || []).length }
+  })
+
   ipcMain.handle('item:drag', (_e, id) => {
     const item = store.get(id)
     if (!item) return false
 
-    const file = resolveDragFile(item, { tempDir: dragTempDir(), readImage: readImageBuffer })
-    if (!file) return false
+    const files = resolveDragFiles(item, { tempDir: dragTempDir(), readImage: readImageBuffer })
+    if (!files.length) return false
 
     const icon = nativeImage.createFromPath(path.join(__dirname, '..', 'assets', 'icon.png'))
     dragging = true
     try {
-      win.webContents.startDrag({ file, icon: icon.isEmpty() ? undefined : icon.resize({ width: 64, height: 64 }) })
+      win.webContents.startDrag({
+        file: files[0],
+        // An entry that holds several paths drags them all at once.
+        ...(files.length > 1 ? { files } : {}),
+        icon: icon.isEmpty() ? undefined : icon.resize({ width: 64, height: 64 })
+      })
     } finally {
       // The drop hands focus to the window under the cursor, which fires blur on
       // us. Wait for that blur to arrive and be ignored, then collapse only if
-      // we really are in the background.
+      // we really are in the background — and never when the panel is meant to
+      // stay put.
       setTimeout(() => {
         dragging = false
         if (!win || win.isDestroyed() || win.isFocused() || view === 'collapsed') return
+        if (store.settings.stayOpen) return
         collapsePanel({ dismiss: view === 'palette' })
       }, 900)
     }
@@ -699,7 +732,7 @@ function registerIpc() {
     }
 
     const result = await writeMerged(items, store.imagesDir, store.settings.mergeSeparator)
-    if (store.settings.collapseOnCopy) collapsePanel({ dismiss: true })
+    if (store.settings.collapseOnCopy) collapsePanel({ dismiss: !store.settings.stayOpen })
     await watcher.resync()
 
     if (!result.ok) return { ok: false, message: '这些内容无法合并复制' }
@@ -771,6 +804,7 @@ function backfillImageFiles() {
 app.whenReady().then(() => {
   cleanDragTemp()
   store = new Store(app.getPath('userData'))
+  panelPos = store.settings.panelPos || null
   vaultLocked = store.vault.enabled
 
   if (process.argv.includes('--hidden') && !store.settings.showDock) {

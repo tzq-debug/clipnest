@@ -41,6 +41,8 @@ export interface Settings {
   ignoreKeywords: string[]
   shortcut: string
   collapseOnCopy: boolean
+  /** Keep the panel on screen instead of collapsing on every lost focus. */
+  stayOpen: boolean
   sequentialDelay: number
   mergeSeparator: MergeSeparator
   showDock: boolean
@@ -81,8 +83,8 @@ export interface ClipNestApi {
   onState: (fn: (s: AppState) => void) => () => void
   onClosing: (fn: () => void) => () => void
   setView: (view: View) => Promise<View>
-  hover: (inside: boolean) => Promise<boolean>
   dismiss: () => Promise<boolean>
+  collapse: () => Promise<boolean>
   copy: (ids: string[], mode: 'merged' | 'sequential') => Promise<CopyResult>
   openImage: (id: string) => Promise<boolean>
   setModal: (open: boolean) => Promise<boolean>
@@ -90,6 +92,8 @@ export interface ClipNestApi {
   star: (id: string, value: boolean) => Promise<boolean>
   seal: (id: string, value: boolean) => Promise<{ ok: boolean; sealed?: boolean; message?: string }>
   drag: (id: string) => Promise<boolean>
+  pathForFile: (file: File) => string
+  dropFiles: (paths: string[]) => Promise<{ ok: boolean; isNew?: boolean; count?: number; message?: string }>
   remove: (id: string) => Promise<boolean>
   reveal: (id: string) => Promise<boolean>
   clear: (keepPinned: boolean) => Promise<{ cleared: number }>

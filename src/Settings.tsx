@@ -210,6 +210,9 @@ export default function Settings({
         </Group>
 
         <Group title="界面">
+          <Row title="面板常驻" hint="只有点「收起」或「隐藏」才会离开屏幕，切换窗口不会自动收">
+            <Switch label="面板常驻" checked={settings.stayOpen} onChange={(v) => onUpdate({ stayOpen: v })} />
+          </Row>
           <Row title="贴边小条" hint="显示屏幕右边缘的常驻小框">
             <Switch label="贴边小条" checked={settings.showDock} onChange={(v) => onUpdate({ showDock: v })} />
           </Row>

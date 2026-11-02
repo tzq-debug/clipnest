@@ -21,6 +21,7 @@
   --warn: #8a5a00;
   --warn-soft: #faeeda;
   --star: #c08a1e;
+  --drop-veil: rgba(83, 74, 183, 0.14);
   --scroll: rgba(18, 18, 30, 0.18);
   --shadow: 0 20px 50px rgba(20, 20, 42, 0.18), 0 2px 8px rgba(20, 20, 42, 0.07);
 }
@@ -47,6 +48,7 @@
   --warn: #efc27b;
   --warn-soft: #3a2e18;
   --star: #e0a93c;
+  --drop-veil: rgba(175, 169, 236, 0.16);
   --scroll: rgba(255, 255, 255, 0.16);
   --shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
 }
@@ -187,11 +189,45 @@ button {
   box-shadow: var(--shadow);
 }
 
+/* Shown while files are dragged over the panel. pointer-events:none keeps the
+   overlay from swallowing the drop event it is advertising. */
+.drop-hint {
+  position: absolute;
+  inset: 6px;
+  z-index: 30;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed var(--accent-400);
+  border-radius: 12px;
+  background: var(--drop-veil);
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* A solid chip keeps the label readable whatever card it lands on. */
+.drop-hint span {
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--bg);
+  box-shadow: 0 2px 10px rgba(20, 20, 42, 0.14);
+}
+
 .head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 11px 10px 7px 13px;
+  /* The window is frameless: the title bar doubles as the drag handle. */
+  -webkit-app-region: drag;
+}
+
+/* Anything clickable has to opt back out of the drag region. */
+.head button,
+.head input,
+.head select {
+  -webkit-app-region: no-drag;
 }
 
 .brand {

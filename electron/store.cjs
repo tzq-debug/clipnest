@@ -15,6 +15,10 @@ const DEFAULT_SETTINGS = {
   ignoreKeywords: [],
   shortcut: 'Control+Shift+V',
   collapseOnCopy: true,
+  /** Keep the panel on screen instead of collapsing whenever it loses focus. */
+  stayOpen: true,
+  /** Where the user dragged the panel to, if they moved it. */
+  panelPos: null,
   sequentialDelay: 380,
   mergeSeparator: 'newline',
   showDock: true,
@@ -372,6 +376,53 @@ class Store {
   }
 
   /* ---------- capture helpers ---------- */
+
+  /**
+   * Build a history entry for files the user dropped onto the window. Mirrors
+   * what the clipboard path does: one entry per drop, images get a thumbnail so
+   * they show up under 图片.
+   */
+  importPaths(paths) {
+    const list = (Array.isArray(paths) ? paths : []).filter((p) => typeof p === 'string' && p.trim())
+    if (!list.length) return null
+
+    const imageRe = /\.(png|jpe?g|gif|webp|bmp|avif)$/i
+    let bytes = 0
+    for (const p of list) {
+      try {
+        bytes += fs.statSync(p).size
+      } catch {
+        /* the file may already be gone */
+      }
+    }
+
+    let extra = {}
+    const imageFiles = list.filter((p) => imageRe.test(p))
+    if (imageFiles.length) {
+      const asset = this.saveThumbFromFile(imageFiles[0])
+      if (asset) {
+        extra = {
+          isImage: imageFiles.length === list.length,
+          thumb: asset.thumb,
+          big: asset.big,
+          width: asset.width,
+          height: asset.height
+        }
+      }
+    }
+
+    const result = this.add({
+      id: Store.newId(),
+      type: 'files',
+      files: list,
+      bytes,
+      hash: Store.hashOf('f:', list.join('\n')),
+      createdAt: Date.now(),
+      pinned: false,
+      ...extra
+    })
+    return result
+  }
 
   static newId() {
     return crypto.randomBytes(8).toString('hex')
